@@ -1,2 +1,28 @@
 /**:
   ros__parameters:
+    color_width: 640
+    color_height: 480
+    color_fps: 30.0
+    color_frame_id: "color_frame"
+    color_optical_frame_id: "color_optical_frame"
+    enable_color: true
+    ir_width: 640
+    ir_height: 480
+    ir_fps: 30.0
+    ir_frame_id: "ir_frame"
+    ir_optical_frame_id: "ir_optical_frame"
+    enable_ir: true
+    depth_width: 640
+    depth_height: 480
+    depth_fps: 30.0
+    depth_frame_id: "depth_frame"
+    depth_optical_frame_id: "depth_optical_frame"
+    enable_depth: true
+    publish_tf: true
+    tf_publish_rate: 10.0
+    reconnect_timeout: 6.0
+    depth_registration: true
+    serial_number: ""
+    camera_link_frame_id: "camera_link"
+    use_uvc_camera : false
+    device_uri : ""
