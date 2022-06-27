@@ -2,22 +2,43 @@
 #include <cstdlib>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/image_encodings.hpp>
+#include <std_srvs/srv/set_bool.hpp>
+
+
+#include <magic_enum.hpp>
+
+#include <openni2/OpenNI.h>
+
+#include "astra_camera_msgs/srv/get_device_info.hpp"
+#include "astra_camera_msgs/msg/extrinsics.hpp"
+#include "astra_camera_msgs/srv/set_int32.hpp"
+#include "astra_camera_msgs/srv/get_int32.hpp"
+#include "astra_camera_msgs/srv/get_string.hpp"
+#include "astra_camera_msgs/srv/get_camera_info.hpp"
 
 namespace astra_camera {
-using FrameCallbackFunction = std::function<void(const sensor_msgs::msg::Image& image)>;
+
+using FrameCallbackFunction = std::function<void(const openni::VideoFrameRef& frame)>;
+using GetDeviceInfo = astra_camera_msgs::srv::GetDeviceInfo;
+using Extrinsics = astra_camera_msgs::msg::Extrinsics;
+using SetInt32 = astra_camera_msgs::srv::SetInt32;
+using GetInt32 = astra_camera_msgs::srv::GetInt32;
+using GetString = astra_camera_msgs::srv::GetString;
+using SetBool = std_srvs::srv::SetBool;
+using CameraInfo = sensor_msgs::msg::CameraInfo;
+using GetCameraInfo = astra_camera_msgs::srv::GetCameraInfo;
+
+using stream_index_pair = std::pair<openni::SensorType, int>;
+
+const stream_index_pair COLOR{openni::SENSOR_COLOR, 0};
+const stream_index_pair DEPTH{openni::SENSOR_DEPTH, 0};
+const stream_index_pair INFRA0{openni::SENSOR_IR, 0};
+
+const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, COLOR};
 
 typedef enum {
   RGBResolution4_3 = 0,   // 4:3分辨率 如：640x480
   RGBResolution16_9 = 1,  // 16:9分辨率 如：1920x1280
 } RgbResolution;
-
-typedef enum {
-  OB_STREAM_VIDEO = 0,
-  OB_STREAM_IR = 1,
-  OB_STREAM_COLOR = 2,
-  OB_STREAM_DEPTH = 3,
-  OB_STREAM_ACCEL = 4,
-  OB_STREAM_GYRO = 5,
-} OBStreamType;
 
 }  // namespace astra_camera

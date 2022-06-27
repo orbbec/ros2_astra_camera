@@ -20,13 +20,13 @@ class OBFrameListener : public openni::VideoStream::NewFrameListener {
 
   void setUseDeviceTimer(bool enable);
 
-  void setCallback(FrameCallbackFunction& callback) { callback_ = callback; }
+  void setCallback(FrameCallbackFunction callback);
 
  private:
   openni::VideoFrameRef frame_;
   rclcpp::Logger logger_;
-  uint32_t step_;
   FrameCallbackFunction callback_;
+  bool have_callback_;
 
   bool user_device_timer_;
   std::shared_ptr<OBTimerFilter> timer_filter_;

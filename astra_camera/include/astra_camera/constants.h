@@ -46,7 +46,7 @@ const double DIAGNOSTICS_PERIOD = 0;  // Static transform
 
 const int IMAGE_WIDTH = 640;
 const int IMAGE_HEIGHT = 480;
-const double IMAGE_FPS = 30.0;
+const int IMAGE_FPS = 30;
 
 const std::string IMAGE_QOS = "SYSTEM_DEFAULT";
 const std::string DEFAULT_QOS = "DEFAULT";
@@ -102,6 +102,7 @@ constexpr static uint32_t DABAI_DC1_PID = 0x0657;
 constexpr static uint32_t DABAI_D1_PID = 0x0658;
 constexpr static uint32_t DABAI_DCW_DEPTH_PID = 0x0659;
 constexpr static uint32_t DABAI_DW_PID = 0x065a;
+constexpr static uint32_t DEEYEA_PID = 0x050b;
 const std::string OB_STEREO_S = "Orbbec Canglong";
 const std::string OB_EMBEDDED_S = "Astra SL1000S_U3";
 const std::string OB_STEREO_S_U3 = "Astra SV1301S_U3";

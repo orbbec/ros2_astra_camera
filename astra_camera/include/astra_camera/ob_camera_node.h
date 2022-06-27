@@ -2,6 +2,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <magic_enum.hpp>
+
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -11,7 +13,10 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <std_srvs/srv/set_bool.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/distortion_models.hpp>
+
 #include <image_transport/image_transport.hpp>
+#include <camera_info_manager/camera_info_manager.hpp>
 
 #include <openni2/OpenNI.h>
 #include <openni2/PS1080.h>
@@ -29,28 +34,9 @@
 #include "uvc_camara_driver.h"
 #include "dynamic_params.h"
 #include "types.h"
+#include "ob_frame_listener.h"
 
 namespace astra_camera {
-using GetDeviceInfo = astra_camera_msgs::srv::GetDeviceInfo;
-using Extrinsics = astra_camera_msgs::msg::Extrinsics;
-using SetInt32 = astra_camera_msgs::srv::SetInt32;
-using GetInt32 = astra_camera_msgs::srv::GetInt32;
-using GetString = astra_camera_msgs::srv::GetString;
-using SetBool = std_srvs::srv::SetBool;
-
-typedef std::pair<OBStreamType, int> stream_index_pair;
-
-const stream_index_pair COLOR{OB_STREAM_COLOR, 0};
-const stream_index_pair DEPTH{OB_STREAM_DEPTH, 0};
-const stream_index_pair INFRA0{OB_STREAM_IR, 0};
-
-const stream_index_pair GYRO{OB_STREAM_GYRO, 0};
-const stream_index_pair ACCEL{OB_STREAM_ACCEL, 0};
-
-const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, COLOR};
-
-const std::vector<stream_index_pair> HID_STREAMS = {GYRO, ACCEL};
-
 class OBCameraNode {
  public:
   OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> device,
@@ -64,10 +50,28 @@ class OBCameraNode {
 
   void clean();
 
+  void init();
+
+  template <class T>
+  void setAndGetNodeParameter(
+      T& param, const std::string& param_name, const T& default_value,
+      const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+          rcl_interfaces::msg::ParameterDescriptor());  // set and get parameter
+
  private:
   void setupCameraCtrlServices();
 
+  void setupConfig();
+
   void setupDevices();
+
+  void setupFrameCallback();
+
+  void setupVideoMode();
+
+  void startStreams();
+
+  void stopStreams();
 
   void getParameters();
 
@@ -84,58 +88,79 @@ class OBCameraNode {
 
   void publishStaticTransforms();
 
-  void getExposureCallback(const std::shared_ptr<GetInt32::Request>& request,
+  void setImageRegistrationMode(bool data);
+
+  bool setMirrorCallback(const std::shared_ptr<SetBool::Request>& request,
+                         std::shared_ptr<SetBool::Response>& response,
+                         const stream_index_pair& stream_index);
+
+  bool getExposureCallback(const std::shared_ptr<GetInt32::Request>& request,
                            std::shared_ptr<GetInt32::Response>& response,
                            const stream_index_pair& stream_index);
 
-  void setExposureCallback(const std::shared_ptr<SetInt32::Request>& request,
+  bool setExposureCallback(const std::shared_ptr<SetInt32::Request>& request,
                            std::shared_ptr<SetInt32::Response>& response,
                            const stream_index_pair& stream_index);
 
-  void getGainCallback(const std::shared_ptr<GetInt32::Request>& request,
+  bool getGainCallback(const std::shared_ptr<GetInt32::Request>& request,
                        std::shared_ptr<GetInt32::Response>& response,
                        const stream_index_pair& stream_index);
 
-  void setGainCallback(const std::shared_ptr<SetInt32::Request>& request,
+  bool setGainCallback(const std::shared_ptr<SetInt32::Request>& request,
                        std::shared_ptr<SetInt32::Response>& response,
                        const stream_index_pair& stream_index);
 
-  void getWhiteBalanceCallback(const std::shared_ptr<GetInt32::Request>& request,
-                               std::shared_ptr<GetInt32::Response>& response);
+  bool getAutoWhiteBalanceEnabledCallback(const std::shared_ptr<GetInt32::Request>& request,
+                                          std::shared_ptr<GetInt32::Response>& response,
+                                          const stream_index_pair& stream_index);
 
-  void setWhiteBalanceCallback(const std::shared_ptr<SetInt32 ::Request>& request,
-                               std::shared_ptr<SetInt32 ::Response>& response);
+  bool setAutoWhiteBalanceEnabledCallback(const std::shared_ptr<SetInt32 ::Request>& request,
+                                          std::shared_ptr<SetInt32 ::Response>& response,
+                                          const stream_index_pair& stream_index);
 
-  void setAutoExposureCallback(const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
+  bool setAutoExposureCallback(const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
                                std::shared_ptr<std_srvs::srv::SetBool::Response>& response,
                                const stream_index_pair& stream_index);
 
-  void setLaserEnableCallback(const std::shared_ptr<rmw_request_id_t>& request_header,
-                              const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
-                              std::shared_ptr<std_srvs::srv::SetBool::Response>& response);
+  bool setLaserEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
+                              std::shared_ptr<SetInt32::Response>& response);
 
-  void setFloorEnableCallback(const std::shared_ptr<rmw_request_id_t>& request_header,
-                              const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
-                              std::shared_ptr<std_srvs::srv::SetBool::Response>& response);
+  bool setLdpEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
+                            std::shared_ptr<SetInt32::Response>& response);
 
-  void setLdpEnableCallback(const std::shared_ptr<rmw_request_id_t>& request_header,
-                            const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
-                            std::shared_ptr<std_srvs::srv::SetBool::Response>& response);
-
-  void setFanModeCallback(const std::shared_ptr<SetInt32::Request>& request,
+  bool setFanModeCallback(const std::shared_ptr<SetInt32::Request>& request,
                           std::shared_ptr<SetInt32::Response>& response);
 
-  void getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,
+  bool getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,
                              std::shared_ptr<GetDeviceInfo::Response>& response);
 
-  void getSDKVersion(const std::shared_ptr<GetString::Request>& request,
-                     std::shared_ptr<GetString::Response>& response);
+  static bool getSDKVersion(const std::shared_ptr<GetString::Request>& request,
+                            std::shared_ptr<GetString::Response>& response);
 
-  void toggleSensorCallback(const std::shared_ptr<SetBool::Request>& request,
+  bool toggleSensorCallback(const std::shared_ptr<SetBool::Request>& request,
                             std::shared_ptr<SetBool::Response>& response,
                             const stream_index_pair& stream_index);
 
   bool toggleSensor(const stream_index_pair& stream_index, bool enabled, std::string& msg);
+
+  void onNewFrameCallback(const openni::VideoFrameRef& frame,
+                          const stream_index_pair& stream_index);
+
+  void setDepthColorSync(bool data);
+
+  void setDepthToColorResolution(int width, int height);
+
+  OBCameraParams getCameraParams();
+
+  static sensor_msgs::msg::CameraInfo OBCameraParamsToCameraInfo(const OBCameraParams& params);
+
+  double getFocalLength(const stream_index_pair& stream_index, int y_resolution);
+
+  CameraInfo::UniquePtr getIRCameraInfo();
+
+  CameraInfo::UniquePtr getDepthCameraInfo();
+
+  CameraInfo::UniquePtr getColorCameraInfo();
 
  private:
   rclcpp::Node* node_;
@@ -145,9 +170,28 @@ class OBCameraNode {
   rclcpp::Logger logger_;
   bool use_uvc_camera_ = false;
   openni::DeviceInfo device_info_;
+  std::atomic_bool is_running_;
   std::map<stream_index_pair, bool> enable_;
+  std::map<stream_index_pair, bool> stream_started_;
+  std::map<stream_index_pair, int> width_;
+  std::map<stream_index_pair, int> height_;
+  std::map<stream_index_pair, int> fps_;
+  std::map<stream_index_pair, openni::PixelFormat> format_;
+  std::map<stream_index_pair, int> image_format_;
+  std::map<stream_index_pair, std::string> encoding_;
+  std::map<stream_index_pair, cv::Mat> images_;
+  std::vector<int> compression_params_;
+  std::string camera_link_frame_id_;
+  std::map<stream_index_pair, std::string> frame_id_;
+  std::map<stream_index_pair, std::string> optical_frame_id_;
+  std::map<stream_index_pair, std::string> depth_aligned_frame_id_;
   std::map<stream_index_pair, std::string> stream_name_;
   std::map<stream_index_pair, std::shared_ptr<openni::VideoStream>> streams_;
+  std::map<stream_index_pair, openni::VideoMode> stream_video_mode_;
+  std::map<stream_index_pair, std::vector<openni::VideoMode>> supported_video_modes_;
+  std::map<stream_index_pair, std::shared_ptr<OBFrameListener>> stream_frame_listener_;
+  std::map<stream_index_pair, FrameCallbackFunction> stream_frame_callback_;
+  std::map<stream_index_pair, int> unit_step_size_;
   std::map<stream_index_pair, image_transport::Publisher> image_publishers_;
   std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>
       camera_info_publishers_;
@@ -156,25 +200,35 @@ class OBCameraNode {
   std::map<stream_index_pair, rclcpp::Service<SetInt32>::SharedPtr> set_exposure_srv_;
   std::map<stream_index_pair, rclcpp::Service<GetInt32>::SharedPtr> get_gain_srv_;
   std::map<stream_index_pair, rclcpp::Service<SetInt32>::SharedPtr> set_gain_srv_;
+  std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> set_mirror_srv_;
   std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> toggle_sensor_srv_;
-  rclcpp::Service<GetInt32>::SharedPtr get_white_balance_srv_;  // only rgb
-  rclcpp::Service<SetInt32>::SharedPtr set_white_balance_srv_;
+  std::map<stream_index_pair, rclcpp::Service<GetInt32>::SharedPtr> get_white_balance_srv_;
+  std::map<stream_index_pair, rclcpp::Service<SetInt32>::SharedPtr> set_white_balance_srv_;
   rclcpp::Service<GetString>::SharedPtr get_sdk_version_srv_;
   std::map<stream_index_pair, rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr>
-      set_auto_exposure_srv_;  // only rgb color
+      set_auto_exposure_srv_;
   rclcpp::Service<GetDeviceInfo>::SharedPtr get_device_srv_;
-  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_laser_enable_srv_;
-  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_ldp_enable_srv_;
-  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr set_floor_enable_srv_;
+  rclcpp::Service<SetInt32>::SharedPtr set_laser_enable_srv_;
+  rclcpp::Service<SetInt32>::SharedPtr set_ldp_enable_srv_;
   rclcpp::Service<SetInt32>::SharedPtr set_fan_mode_srv_;
 
   bool publish_tf_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_tf_broadcaster_;
-  std::vector<geometry_msgs::msg::TransformStamped> tf_msgs;
+  std::vector<geometry_msgs::msg::TransformStamped> static_tf_msgs_;
+  rclcpp::Publisher<Extrinsics>::SharedPtr extrinsics_publisher_;
   std::shared_ptr<std::thread> tf_thread_;
   std::condition_variable tf_cv_;
   double tf_publish_rate_ = 10.0;
+  bool depth_registration_;
+  OBCameraParams camera_params_;
+  std::shared_ptr<camera_info_manager::CameraInfoManager> color_camera_info_manager_;
+  std::shared_ptr<camera_info_manager::CameraInfoManager> ir_camera_info_manager_;
+  std::string color_camera_info_url_;
+  std::string ir_camera_info_url_;
+  double depth_ir_x_offset_ = 0.0;
+  double depth_ir_y_offset_ = 0.0;
+  bool color_depth_synchronization_;
 };
 
 }  // namespace astra_camera
