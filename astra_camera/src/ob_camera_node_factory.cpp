@@ -12,9 +12,15 @@ OBCameraNodeFactory::OBCameraNodeFactory(const std::string& node_name, const std
   init();
 }
 
-OBCameraNodeFactory::~OBCameraNodeFactory() = default;
+OBCameraNodeFactory::~OBCameraNodeFactory() { openni::OpenNI::shutdown(); }
 
 void OBCameraNodeFactory::init() {
+  auto rc = openni::OpenNI::initialize();
+  if (rc != openni::STATUS_OK) {
+    RCLCPP_ERROR(logger_, "Initialize failed\n%s\n", openni::OpenNI::getExtendedError());
+    exit(-1);
+  }
+  openni::OpenNI::setLogConsoleOutput(true);
   device_connected_.store(false);
   parameters_ = std::make_shared<Parameters>(this);
   use_uvc_camera_ = declare_parameter<bool>("use_uvc_camera", false);
@@ -54,7 +60,8 @@ void OBCameraNodeFactory::startDevice() {
 }
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
-  if (!device_uri_.empty() || device_uri_ == device_info->getUri()) {
+  RCLCPP_INFO_STREAM(logger_, "device connect..." << device_info->getUri());
+  if (device_uri_.empty() || device_uri_ == device_info->getUri()) {
     device_info = device_info_;
     auto uri = device_info->getUri();
     if (device_) {
@@ -67,7 +74,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
 }
 
 void OBCameraNodeFactory::onDeviceDisconnected(const openni::DeviceInfo* device_info) {
-  if (!device_uri_.empty() || device_uri_ == device_info->getUri()) {
+  if (device_uri_.empty() || device_uri_ == device_info->getUri()) {
     device_info = nullptr;
     if (ob_camera_node_) {
       ob_camera_node_.reset();
@@ -85,7 +92,7 @@ void OBCameraNodeFactory::onDeviceDisconnected(const openni::DeviceInfo* device_
 
 void OBCameraNodeFactory::checkConnectionTimer() {
   if (!device_connected_) {
-    RCLCPP_INFO_STREAM(logger_, "wait for device connect...");
+    // RCLCPP_INFO_STREAM(logger_, "wait for device connect...");
   }
 }
 

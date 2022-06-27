@@ -10,9 +10,9 @@ using DeviceConnectedCb = std::function<void(const openni::DeviceInfo*)>;
 
 using DeviceDisconnectedCb = std::function<void(const openni::DeviceInfo*)>;
 
-class DeviceListener : openni::OpenNI::DeviceConnectedListener,
-                       openni::OpenNI::DeviceDisconnectedListener,
-                       openni::OpenNI::DeviceStateChangedListener {
+class DeviceListener : public openni::OpenNI::DeviceConnectedListener,
+                       public openni::OpenNI::DeviceDisconnectedListener,
+                       public openni::OpenNI::DeviceStateChangedListener {
  public:
   explicit DeviceListener();
 
