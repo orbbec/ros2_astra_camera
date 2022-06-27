@@ -93,7 +93,7 @@ ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
   )
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "orbbec_camera::OBCameraNodeFactory"
+  PLUGIN "astra_camera::OBCameraNodeFactory"
   EXECUTABLE astra_camera_node
   )
 target_include_directories(${PROJECT_NAME} PUBLIC
