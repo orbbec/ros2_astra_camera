@@ -177,7 +177,7 @@ void OBCameraNode::setupConfig() {
   unit_step_size_[DEPTH] = sizeof(uint16_t);
   format_[DEPTH] = openni::PIXEL_FORMAT_DEPTH_1_MM;
   image_format_[DEPTH] = CV_16UC1;
-  encoding_[COLOR] = sensor_msgs::image_encodings::TYPE_16UC1;
+  encoding_[DEPTH] = sensor_msgs::image_encodings::TYPE_16UC1;
 
   stream_name_[COLOR] = "color";
   unit_step_size_[COLOR] = 3;
@@ -352,15 +352,11 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   auto timestamp = node_->now();
   camera_info->header.stamp = timestamp;
   camera_info->header.frame_id = optical_frame_id_[stream_index];
-  RCLCPP_INFO_STREAM(logger_, "666");
-
   camera_info_publisher->publish(std::move(camera_info));
-  RCLCPP_INFO_STREAM(logger_, "777");
 
   auto image_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), encoding_.at(stream_index), image).toImageMsg();
-  RCLCPP_INFO_STREAM(logger_, "888");
-
+  CHECK_NOTNULL(image_msg);
   image_msg->header.stamp = timestamp;
   image_msg->header.frame_id =
       depth_registration_ ? optical_frame_id_[stream_index] : depth_aligned_frame_id_[stream_index];

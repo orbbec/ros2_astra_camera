@@ -222,10 +222,6 @@ class OBCameraNode {
   double tf_publish_rate_ = 10.0;
   bool depth_registration_;
   std::optional<OBCameraParams> camera_params_;
-  std::shared_ptr<camera_info_manager::CameraInfoManager> color_camera_info_manager_;
-  std::shared_ptr<camera_info_manager::CameraInfoManager> ir_camera_info_manager_;
-  std::string color_camera_info_url_;
-  std::string ir_camera_info_url_;
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;
   bool color_depth_synchronization_;

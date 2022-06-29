@@ -143,72 +143,60 @@ double OBCameraNode::getFocalLength(const stream_index_pair& stream_index, int y
 CameraInfo::UniquePtr OBCameraNode::getIRCameraInfo() {
   int width = width_[INFRA0];
   int height = height_[INFRA0];
-  if (ir_camera_info_manager_->isCalibrated()) {
-    auto camera_info = std::make_shared<CameraInfo>(ir_camera_info_manager_->getCameraInfo());
-    if (camera_info->width != static_cast<uint32_t>(width)) {
-      RCLCPP_WARN_STREAM(
-          logger_,
-          "Image resolution doesn't match calibration of the IR camera. Using default parameters.");
-      double ir_focal_length = getFocalLength(INFRA0, height);
-      return getDefaultCameraInfo(width, height, ir_focal_length);
-    }
-  } else {
-    double depth_focal_length = getFocalLength(DEPTH, height);
-    auto camera_info_ptr = getDefaultCameraInfo(width, height, depth_focal_length);
-    auto camera_params = getCameraParams();
-    if (isValidCameraParams(camera_params)) {
-      camera_info_ptr->d.resize(5, 0.0);
+  double depth_focal_length = getFocalLength(DEPTH, height);
+  auto camera_info_ptr = getDefaultCameraInfo(width, height, depth_focal_length);
+  auto camera_params = getCameraParams();
+  if (isValidCameraParams(camera_params)) {
+    camera_info_ptr->d.resize(5, 0.0);
 
-      camera_info_ptr->k.fill(0.0);
+    camera_info_ptr->k.fill(0.0);
+    camera_info_ptr->k[0] = camera_params.r_intr_p[0];
+    camera_info_ptr->k[2] = camera_params.r_intr_p[2];
+    camera_info_ptr->k[4] = camera_params.r_intr_p[1];
+    camera_info_ptr->k[5] = camera_params.r_intr_p[3];
+    camera_info_ptr->k[8] = 1.0;
+    if (!depth_registration_) {
+      camera_info_ptr->k[0] = camera_params.l_intr_p[0];
+      camera_info_ptr->k[2] = camera_params.l_intr_p[2];
+      camera_info_ptr->k[4] = camera_params.l_intr_p[1];
+      camera_info_ptr->k[5] = camera_params.l_intr_p[3];
+      camera_info_ptr->k[8] = 1.0;
+    } else {
       camera_info_ptr->k[0] = camera_params.r_intr_p[0];
       camera_info_ptr->k[2] = camera_params.r_intr_p[2];
       camera_info_ptr->k[4] = camera_params.r_intr_p[1];
       camera_info_ptr->k[5] = camera_params.r_intr_p[3];
       camera_info_ptr->k[8] = 1.0;
-      if (!depth_registration_) {
-        camera_info_ptr->k[0] = camera_params.l_intr_p[0];
-        camera_info_ptr->k[2] = camera_params.l_intr_p[2];
-        camera_info_ptr->k[4] = camera_params.l_intr_p[1];
-        camera_info_ptr->k[5] = camera_params.l_intr_p[3];
-        camera_info_ptr->k[8] = 1.0;
-      } else {
-        camera_info_ptr->k[0] = camera_params.r_intr_p[0];
-        camera_info_ptr->k[2] = camera_params.r_intr_p[2];
-        camera_info_ptr->k[4] = camera_params.r_intr_p[1];
-        camera_info_ptr->k[5] = camera_params.r_intr_p[3];
-        camera_info_ptr->k[8] = 1.0;
-      }
-
-      camera_info_ptr->r.fill(0.0);
-      camera_info_ptr->r[0] = 1.0;
-      camera_info_ptr->r[4] = 1.0;
-      camera_info_ptr->r[8] = 1.0;
-
-      camera_info_ptr->p.fill(0.0);
-      camera_info_ptr->p[0] = camera_info_ptr->k[0];
-      camera_info_ptr->p[2] = camera_info_ptr->k[2];
-      camera_info_ptr->p[5] = camera_info_ptr->k[4];
-      camera_info_ptr->p[6] = camera_info_ptr->k[5];
-      camera_info_ptr->p[10] = 1.0;
-      if (device_info_.getUsbProductId() != DABAI_DCW_DEPTH_PID &&
-          device_info_.getUsbProductId() != DABAI_DW_PID) {
-        /* 02122020 Scale IR Params */
-        double scaling = static_cast<double>(width) / 640;
-        camera_info_ptr->k[0] *= scaling;  // fx
-        camera_info_ptr->k[2] *= scaling;  // cx
-        camera_info_ptr->k[4] *= scaling;  // fy
-        camera_info_ptr->k[5] *= scaling;  // cy
-        camera_info_ptr->p[0] *= scaling;  // fx
-        camera_info_ptr->p[2] *= scaling;  // cx
-        camera_info_ptr->p[5] *= scaling;  // fy
-        camera_info_ptr->p[6] *= scaling;  // cy
-
-        /* 02122020 end */
-      }
     }
-    return camera_info_ptr;
+
+    camera_info_ptr->r.fill(0.0);
+    camera_info_ptr->r[0] = 1.0;
+    camera_info_ptr->r[4] = 1.0;
+    camera_info_ptr->r[8] = 1.0;
+
+    camera_info_ptr->p.fill(0.0);
+    camera_info_ptr->p[0] = camera_info_ptr->k[0];
+    camera_info_ptr->p[2] = camera_info_ptr->k[2];
+    camera_info_ptr->p[5] = camera_info_ptr->k[4];
+    camera_info_ptr->p[6] = camera_info_ptr->k[5];
+    camera_info_ptr->p[10] = 1.0;
+    if (device_info_.getUsbProductId() != DABAI_DCW_DEPTH_PID &&
+        device_info_.getUsbProductId() != DABAI_DW_PID) {
+      /* 02122020 Scale IR Params */
+      double scaling = static_cast<double>(width) / 640;
+      camera_info_ptr->k[0] *= scaling;  // fx
+      camera_info_ptr->k[2] *= scaling;  // cx
+      camera_info_ptr->k[4] *= scaling;  // fy
+      camera_info_ptr->k[5] *= scaling;  // cy
+      camera_info_ptr->p[0] *= scaling;  // fx
+      camera_info_ptr->p[2] *= scaling;  // cx
+      camera_info_ptr->p[5] *= scaling;  // fy
+      camera_info_ptr->p[6] *= scaling;  // cy
+
+      /* 02122020 end */
+    }
   }
-  return nullptr;
+  return camera_info_ptr;
 }
 
 CameraInfo::UniquePtr OBCameraNode::getDepthCameraInfo() {
@@ -224,67 +212,54 @@ CameraInfo::UniquePtr OBCameraNode::getDepthCameraInfo() {
   camera_info_ptr->p[2] -= depth_ir_x_offset_ * scaling;
   camera_info_ptr->p[6] -= depth_ir_y_offset_ * scaling;
 
-  /// @todo Could put this in projector frame so as to encode the baseline in P[3]
+  // TODO: Could put this in projector frame so as to encode the baseline in P[3]
   return camera_info_ptr;
 }
 
 CameraInfo::UniquePtr OBCameraNode::getColorCameraInfo() {
   int width = width_[COLOR];
   int height = height_[COLOR];
-  if (color_camera_info_manager_ && color_camera_info_manager_->isCalibrated()) {
-    auto camera_info = std::make_unique<CameraInfo>(color_camera_info_manager_->getCameraInfo());
-    if (camera_info->width != static_cast<uint32_t>(width)) {
-      // Use uncalibrated values
-      RCLCPP_WARN_STREAM(logger_,
-                         "Image resolution doesn't match calibration of the RGB camera. Using "
-                         "default parameters.");
-      double color_focal_length = getFocalLength(COLOR, height);
-      return getDefaultCameraInfo(width, height, color_focal_length);
+  // If uncalibrated, fill in default values
+  auto camera_params = getCameraParams();
+  if (isValidCameraParams(camera_params)) {
+    auto default_camera_info = OBCameraParamsToCameraInfo(camera_params);
+    auto camera_info = std::make_unique<CameraInfo>();
+    camera_info->d.resize(5, 0.0);
+    camera_info->k.fill(0.0);
+    camera_info->r.fill(0.0);
+    camera_info->p.fill(0.0);
+    camera_info->distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+    camera_info->width = width;
+    camera_info->height = height;
+
+    for (int i = 0; i < 9; i++) {
+      camera_info->k[i] = default_camera_info.k[i];
+      camera_info->r[i] = default_camera_info.r[i];
     }
+
+    for (int i = 0; i < 12; i++) {
+      camera_info->p[i] = default_camera_info.p[i];
+    }
+    if (device_info_.getUsbProductId() != DABAI_DCW_DEPTH_PID) {
+      /*02112020 color camera param change according to resolution */
+      double scaling = (double)width / 640;
+      camera_info->k[0] *= scaling;  // fx
+      camera_info->k[2] *= scaling;  // cx
+      camera_info->k[4] *= scaling;  // fy
+      camera_info->k[5] *= scaling;  // cy
+      camera_info->p[0] *= scaling;  // fx
+      camera_info->p[2] *= scaling;  // cx
+      camera_info->p[5] *= scaling;  // fy
+      camera_info->p[6] *= scaling;  // cy
+
+      /* 02112020 end*/
+    }
+    return camera_info;
+    // end if (isValidCameraParams(camera_params))
   } else {
-    // If uncalibrated, fill in default values
-    auto camera_params = getCameraParams();
-    if (isValidCameraParams(camera_params)) {
-      auto default_camera_info = OBCameraParamsToCameraInfo(camera_params);
-      auto camera_info = std::make_unique<CameraInfo>(ir_camera_info_manager_->getCameraInfo());
-      camera_info->d.resize(5, 0.0);
-      camera_info->k.fill(0.0);
-      camera_info->r.fill(0.0);
-      camera_info->p.fill(0.0);
-      camera_info->distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
-      camera_info->width = width;
-      camera_info->height = height;
-
-      for (int i = 0; i < 9; i++) {
-        camera_info->k[i] = default_camera_info.k[i];
-        camera_info->r[i] = default_camera_info.r[i];
-      }
-
-      for (int i = 0; i < 12; i++) {
-        camera_info->p[i] = default_camera_info.p[i];
-      }
-      if (device_info_.getUsbProductId() != DABAI_DCW_DEPTH_PID) {
-        /*02112020 color camera param change according to resolution */
-        double scaling = (double)width / 640;
-        camera_info->k[0] *= scaling;  // fx
-        camera_info->k[2] *= scaling;  // cx
-        camera_info->k[4] *= scaling;  // fy
-        camera_info->k[5] *= scaling;  // cy
-        camera_info->p[0] *= scaling;  // fx
-        camera_info->p[2] *= scaling;  // cx
-        camera_info->p[5] *= scaling;  // fy
-        camera_info->p[6] *= scaling;  // cy
-
-        /* 02112020 end*/
-      }
-      return camera_info;
-      // end if (isValidCameraParams(camera_params))
-    } else {
-      double color_focal_length = getFocalLength(COLOR, height);
-      return getDefaultCameraInfo(width, height, color_focal_length);
-    }
+    double color_focal_length = getFocalLength(COLOR, height);
+    return getDefaultCameraInfo(width, height, color_focal_length);
   }
-  return nullptr;
 }
 
 }  // namespace astra_camera
