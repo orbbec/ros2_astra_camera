@@ -14,7 +14,7 @@ class DeviceListener : public openni::OpenNI::DeviceConnectedListener,
                        public openni::OpenNI::DeviceDisconnectedListener,
                        public openni::OpenNI::DeviceStateChangedListener {
  public:
-  explicit DeviceListener();
+  DeviceListener(DeviceConnectedCb connected_cb, DeviceDisconnectedCb disconnected_cb);
 
   ~DeviceListener() override;
 
@@ -23,9 +23,6 @@ class DeviceListener : public openni::OpenNI::DeviceConnectedListener,
   void onDeviceConnected(const openni::DeviceInfo* pInfo) override;
 
   void onDeviceDisconnected(const openni::DeviceInfo* pInfo) override;
-
-  void setDeviceListenerCallback(const DeviceConnectedCb& connected_cb,
-                                 const DeviceDisconnectedCb& disconnected_cb);
 
  private:
   rclcpp::Logger logger_;

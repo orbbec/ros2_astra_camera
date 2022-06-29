@@ -87,6 +87,7 @@ bool isValidCameraParams(const OBCameraParams& params) {
   }
   return true;
 }
+
 std::vector<std::string> split(const std::string& str, char delim) {
   // https://stackoverflow.com/questions/16749069/c-split-string-by-regex
   std::stringstream ss(str);

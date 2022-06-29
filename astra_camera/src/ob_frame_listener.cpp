@@ -7,8 +7,7 @@ OBFrameListener::OBFrameListener()
     : logger_(rclcpp::get_logger("frame_listener")),
       have_callback_(false),
       user_device_timer_(false),
-      timer_filter_(new OBTimerFilter(TIME_FILTER_LENGTH)),
-      prev_time_stamp_(0.0) {}
+      timer_filter_(new OBTimerFilter(TIME_FILTER_LENGTH)) {}
 
 void OBFrameListener::setUseDeviceTimer(bool enable) {
   user_device_timer_ = enable;
@@ -24,9 +23,12 @@ void OBFrameListener::setCallback(FrameCallbackFunction callback) {
 
 void OBFrameListener::onNewFrame(openni::VideoStream& stream) {
   stream.readFrame(&frame_);
-
+  RCLCPP_INFO_STREAM(logger_, "new frame coming...");
   if (frame_.isValid() && have_callback_) {
+    std::lock_guard<decltype(callback_lock_)> lock(callback_lock_);
     callback_(frame_);
+  } else {
+    RCLCPP_ERROR_STREAM(logger_, "frame is invalid , dropped...");
   }
 }
 }  // namespace astra_camera

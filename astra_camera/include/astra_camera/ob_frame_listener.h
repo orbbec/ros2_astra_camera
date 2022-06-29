@@ -1,5 +1,8 @@
 #pragma once
 
+#include <thread>
+#include <mutex>
+#include <atomic>
 #include <rclcpp/rclcpp.hpp>
 
 #include <openni2/OpenNI.h>
@@ -26,12 +29,10 @@ class OBFrameListener : public openni::VideoStream::NewFrameListener {
   openni::VideoFrameRef frame_;
   rclcpp::Logger logger_;
   FrameCallbackFunction callback_;
-  bool have_callback_;
-
+  std::mutex callback_lock_;
+  std::atomic_bool have_callback_;
   bool user_device_timer_;
   std::shared_ptr<OBTimerFilter> timer_filter_;
-
-  double prev_time_stamp_;
 };
 
 }  // namespace astra_camera

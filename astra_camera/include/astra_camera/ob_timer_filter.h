@@ -6,9 +6,10 @@
 #include <openni2/OpenNI.h>
 #include <glog/logging.h>
 
+namespace astra_camera {
 class OBTimerFilter {
  public:
-  explicit OBTimerFilter(std::size_t len);
+  explicit OBTimerFilter(std::size_t buffer_len_);
   ~OBTimerFilter();
 
   void addSample(double sample);
@@ -20,8 +21,9 @@ class OBTimerFilter {
   void clear();
 
  private:
-  std::size_t len_;
+  std::size_t buffer_len_;
   rclcpp::Logger logger_;
 
   std::deque<double> buffer_;
 };
+}  // namespace astra_camera

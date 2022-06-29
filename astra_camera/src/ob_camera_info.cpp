@@ -8,6 +8,9 @@
 namespace astra_camera {
 
 OBCameraParams OBCameraNode::getCameraParams() {
+  if (camera_params_.has_value()) {
+    return camera_params_.value();
+  }
   auto pid = device_info_.getUsbProductId();
   if (pid != DABAI_DCW_DEPTH_PID && pid != DABAI_DW_PID) {
     OBCameraParams params;
@@ -63,6 +66,7 @@ OBCameraParams OBCameraNode::getCameraParams() {
     }
     device_->getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&camera_params_data,
                          &data_size);
+    camera_params_ = camera_params_data.params;
     return camera_params_data.params;
   }
 }
@@ -204,6 +208,7 @@ CameraInfo::UniquePtr OBCameraNode::getIRCameraInfo() {
     }
     return camera_info_ptr;
   }
+  return nullptr;
 }
 
 CameraInfo::UniquePtr OBCameraNode::getDepthCameraInfo() {
@@ -226,7 +231,7 @@ CameraInfo::UniquePtr OBCameraNode::getDepthCameraInfo() {
 CameraInfo::UniquePtr OBCameraNode::getColorCameraInfo() {
   int width = width_[COLOR];
   int height = height_[COLOR];
-  if (color_camera_info_manager_->isCalibrated()) {
+  if (color_camera_info_manager_ && color_camera_info_manager_->isCalibrated()) {
     auto camera_info = std::make_unique<CameraInfo>(color_camera_info_manager_->getCameraInfo());
     if (camera_info->width != static_cast<uint32_t>(width)) {
       // Use uncalibrated values
@@ -279,6 +284,7 @@ CameraInfo::UniquePtr OBCameraNode::getColorCameraInfo() {
       return getDefaultCameraInfo(width, height, color_focal_length);
     }
   }
+  return nullptr;
 }
 
 }  // namespace astra_camera

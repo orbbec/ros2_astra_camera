@@ -4,9 +4,10 @@
 namespace astra_camera {
 
 void OBCameraNode::init() {
+  is_running_.store(true);
+  static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
+  dynamic_tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(node_);
   setupConfig();
-  setupVideoMode();
-  getCameraParams();
   setupTopics();
   startStreams();
 }
@@ -100,7 +101,7 @@ void OBCameraNode::setupDevices() {
       }
     }
   }
-
+  device_info_ = device_->getDeviceInfo();
   setImageRegistrationMode(depth_registration_);
   setDepthColorSync(color_depth_synchronization_);
 }
@@ -162,6 +163,7 @@ void OBCameraNode::startStreams() {
       CHECK_NOTNULL(stream_frame_listener_[stream_index]);
       streams_[stream_index]->addNewFrameListener(stream_frame_listener_[stream_index].get());
       streams_[stream_index]->start();
+      RCLCPP_INFO_STREAM(logger_, magic_enum::enum_name(stream_index.first) << " is started");
     }
   }
   if (use_uvc_camera_) {
@@ -221,8 +223,10 @@ void OBCameraNode::setupTopics() {
   getParameters();
   setupFrameCallback();
   setupDevices();
+  setupVideoMode();
   setupCameraCtrlServices();
   setupPublishers();
+  getCameraParams();
   publishStaticTransforms();
 }
 
@@ -264,8 +268,8 @@ void OBCameraNode::calcAndPublishStaticTransform() {
   quaternion_optical.setRPY(-M_PI / 2, 0.0, -M_PI / 2);
   std::vector<float> zero_trans = {0, 0, 0};
 
-  auto rotation = camera_params_.r2l_r;
-  auto transition = camera_params_.r2l_t;
+  auto rotation = camera_params_->r2l_r;
+  auto transition = camera_params_->r2l_t;
   auto Q = rotationMatrixToQuaternion(rotation);
   Q = quaternion_optical * Q * quaternion_optical.inverse();
   std::vector<float> trans = {transition[0], transition[1], transition[2]};
@@ -327,13 +331,18 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
                                       const stream_index_pair& stream_index) {
   int width = frame.getWidth();
   int height = frame.getHeight();
-  auto& image = images_[stream_index];
+  RCLCPP_INFO_STREAM(logger_, "new frame callback video mode " << frame.getVideoMode());
+  CHECK(images_.count(stream_index));
+
+  auto& image = images_.at(stream_index);
+
   if (image.size() != cv::Size(width, height)) {
     image.create(height, width, image.type());
   }
   image.data = (uint8_t*)frame.getData();
   auto& camera_info_publisher = camera_info_publishers_.at(stream_index);
   auto& image_publisher = image_publishers_.at(stream_index);
+
   auto camera_info = getColorCameraInfo();
   if (camera_info->width != static_cast<uint32_t>(width) ||
       camera_info->height != static_cast<uint32_t>(height)) {
@@ -343,9 +352,15 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   auto timestamp = node_->now();
   camera_info->header.stamp = timestamp;
   camera_info->header.frame_id = optical_frame_id_[stream_index];
+  RCLCPP_INFO_STREAM(logger_, "666");
+
   camera_info_publisher->publish(std::move(camera_info));
+  RCLCPP_INFO_STREAM(logger_, "777");
+
   auto image_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), encoding_.at(stream_index), image).toImageMsg();
+  RCLCPP_INFO_STREAM(logger_, "888");
+
   image_msg->header.stamp = timestamp;
   image_msg->header.frame_id =
       depth_registration_ ? optical_frame_id_[stream_index] : depth_aligned_frame_id_[stream_index];

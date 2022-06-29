@@ -41,9 +41,9 @@ class OBCameraNodeFactory : public rclcpp::Node {
   std::shared_ptr<openni::Device> device_ = nullptr;
   std::shared_ptr<Parameters> parameters_ = nullptr;
   std::shared_ptr<UVCCameraDriver> uvc_camera_driver_ = nullptr;
+  std::shared_ptr<openni::DeviceInfo> device_info_ = nullptr;
   bool use_uvc_camera_;
   UVCCameraConfig uvc_config_;
-  openni::DeviceInfo* device_info_;
   std::unique_ptr<DeviceListener> device_listener_ = nullptr;
   std::string device_uri_;
   rclcpp::TimerBase::SharedPtr check_connection_timer_;

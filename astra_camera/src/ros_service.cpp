@@ -262,6 +262,7 @@ bool OBCameraNode::toggleSensorCallback(const std::shared_ptr<SetBool::Request>&
     RCLCPP_INFO_STREAM(logger_, streams_[stream_index] << " OFF");
   }
   toggleSensor(stream_index, request->data, response->message);
+  return true;
 }
 
 bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enabled,
@@ -278,8 +279,8 @@ bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enab
   if (enabled) {
     enable_[stream_index] = true;
   } else {
-
     encoding_[stream_index];
   }
+  return true;
 }
 }  // namespace astra_camera

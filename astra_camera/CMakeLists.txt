@@ -41,6 +41,7 @@ execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES)
 execute_process(COMMAND getconf LONG_BIT OUTPUT_VARIABLE MACHINES_BIT)
 message(STATUS "ORRBEC Machine : ${MACHINES}")
 message(STATUS "ORRBEC Machine Bits : ${MACHINES_BIT}")
+
 if ((${MACHINES} MATCHES "x86_64") AND (${MACHINES_BIT} MATCHES "64"))
   set(HOST_PLATFORM "x64")
 elseif (${MACHINES} MATCHES "arm")
@@ -60,6 +61,7 @@ add_library(${PROJECT_NAME} SHARED
   src/dynamic_params.cpp
   src/ob_camera_info.cpp
   src/ob_frame_listener.cpp
+  src/ob_timer_filter.cpp
   src/ob_camera_node_factory.cpp
   src/ob_camera_node.cpp
   src/point_cloud_filter.cpp
@@ -89,25 +91,30 @@ set(dependencies
   tf2_ros
   tf2_sensor_msgs
   )
+
 ament_target_dependencies(${PROJECT_NAME}
   ${dependencies}
   )
+
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "astra_camera::OBCameraNodeFactory"
   EXECUTABLE astra_camera_node
   )
+
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
   ${OpenCV_INCLUDED_DIRS}
   )
+
 target_link_libraries(${PROJECT_NAME}
   ${ORBBEC_SDK_LIBRARIES}
   ${OpenCV_LIBS}
   Eigen3::Eigen
   glog::glog
   magic_enum::magic_enum
+  LibUVC::UVCShared
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   )
@@ -116,6 +123,14 @@ install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
+  )
+
+install(FILES openni2_redist/${HOST_PLATFORM}/libOpenNI2.so
+  DESTINATION lib/
+  )
+
+install(DIRECTORY openni2_redist/${HOST_PLATFORM}/OpenNI2
+  DESTINATION lib/
   )
 
 install(
@@ -138,6 +153,7 @@ install(DIRECTORY
   params
   DESTINATION share/${PROJECT_NAME}/
   )
+
 if (BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -148,6 +164,7 @@ if (BUILD_TESTING)
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif ()
+
 ament_export_include_directories(include)
 ament_export_libraries(${PROJECT_NAME})
 ament_export_dependencies(${dependencies})

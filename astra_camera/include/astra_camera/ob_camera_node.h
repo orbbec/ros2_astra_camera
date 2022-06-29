@@ -221,7 +221,7 @@ class OBCameraNode {
   std::condition_variable tf_cv_;
   double tf_publish_rate_ = 10.0;
   bool depth_registration_;
-  OBCameraParams camera_params_;
+  std::optional<OBCameraParams> camera_params_;
   std::shared_ptr<camera_info_manager::CameraInfoManager> color_camera_info_manager_;
   std::shared_ptr<camera_info_manager::CameraInfoManager> ir_camera_info_manager_;
   std::string color_camera_info_url_;
