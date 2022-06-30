@@ -4,7 +4,7 @@ from ament_index_python import get_package_share_directory
 
 
 def generate_launch_description():
-    astra_params_file = (get_package_share_directory("astra_camera") +
+    params_file = (get_package_share_directory("astra_camera") +
                          "/params/astra_params.yaml")
     return LaunchDescription([
         Node(
@@ -13,6 +13,6 @@ def generate_launch_description():
             name="camera",
             executable="astra_camera_node",
             output="screen",
-            parameters=[astra_params_file],
+            parameters=[params_file],
         ),
     ])

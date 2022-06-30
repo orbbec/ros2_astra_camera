@@ -134,6 +134,9 @@ class OBCameraNode {
   bool getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,
                              std::shared_ptr<GetDeviceInfo::Response>& response);
 
+  bool getCameraInfoCallback(const std::shared_ptr<GetCameraInfo::Request>& request,
+                             std::shared_ptr<GetCameraInfo::Response>& response);
+
   static bool getSDKVersion(const std::shared_ptr<GetString::Request>& request,
                             std::shared_ptr<GetString::Response>& response);
 
@@ -211,6 +214,7 @@ class OBCameraNode {
   rclcpp::Service<SetInt32>::SharedPtr set_laser_enable_srv_;
   rclcpp::Service<SetInt32>::SharedPtr set_ldp_enable_srv_;
   rclcpp::Service<SetInt32>::SharedPtr set_fan_mode_srv_;
+  rclcpp::Service<GetCameraInfo>::SharedPtr get_camera_info_srv_;
 
   bool publish_tf_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;

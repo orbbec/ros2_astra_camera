@@ -23,7 +23,6 @@ void OBFrameListener::setCallback(FrameCallbackFunction callback) {
 
 void OBFrameListener::onNewFrame(openni::VideoStream& stream) {
   stream.readFrame(&frame_);
-  RCLCPP_INFO_STREAM(logger_, "new frame coming...");
   if (frame_.isValid() && have_callback_) {
     std::lock_guard<decltype(callback_lock_)> lock(callback_lock_);
     callback_(frame_);

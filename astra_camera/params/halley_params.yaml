@@ -1,5 +1,4 @@
 /**:
-  ros__parameters:/**:
   ros__parameters:
     color_width: 640
     color_height: 480
@@ -25,5 +24,10 @@
     depth_registration: true
     serial_number: ""
     camera_link_frame_id: "camera_link"
-    use_uvc_camera : false
-    device_uri : ""
+    device_uri: ""
+    uvc_camera:
+      enable: true
+      width: 640
+      height: 480
+      fps: 30
+      format: "mjpeg"

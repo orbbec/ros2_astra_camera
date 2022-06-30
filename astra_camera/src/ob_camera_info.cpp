@@ -16,6 +16,7 @@ OBCameraParams OBCameraNode::getCameraParams() {
     OBCameraParams params;
     int data_size = sizeof(OBCameraParams);
     device_->getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &data_size);
+    camera_params_ = params;
     return params;
   } else {
     OBCameraParamsData camera_params_data;

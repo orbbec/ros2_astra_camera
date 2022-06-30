@@ -21,7 +21,6 @@ struct UVCCameraConfig {
   int fps = 0;
   std::string serial_number;
   std::string format;
-  std::string camera_info_url;
   UVCCameraConfig() = default;
   UVCCameraConfig(const UVCCameraConfig&) = default;
   UVCCameraConfig(UVCCameraConfig&&) = default;
@@ -31,7 +30,7 @@ struct UVCCameraConfig {
 
 class UVCCameraDriver {
  public:
-  explicit UVCCameraDriver(rclcpp::Node* node, const UVCCameraConfig& config);
+  explicit UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config);
 
   ~UVCCameraDriver();
 
@@ -124,7 +123,7 @@ class UVCCameraDriver {
   rclcpp::Service<SetBool>::SharedPtr toggle_uvc_camera_srv_;
 
   image_transport::Publisher image_publisher_;
-  std::unique_ptr<camera_info_manager::CameraInfoManager> camera_info_manager_ = nullptr;
+  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
   std::optional<sensor_msgs::msg::CameraInfo> camera_info_;
   rclcpp::Client<GetCameraInfo>::SharedPtr get_camera_info_cli_;
 };

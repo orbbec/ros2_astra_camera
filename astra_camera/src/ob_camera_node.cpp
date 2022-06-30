@@ -15,8 +15,8 @@ void OBCameraNode::init() {
 OBCameraNode::OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> device,
                            std::shared_ptr<Parameters> parameters)
     : node_(node),
-      device_(device),
-      parameters_(parameters),
+      device_(std::move(device)),
+      parameters_(std::move(parameters)),
       logger_(node->get_logger()),
       use_uvc_camera_(false) {
   init();
@@ -26,9 +26,9 @@ OBCameraNode::OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> d
                            std::shared_ptr<Parameters> parameters,
                            std::shared_ptr<UVCCameraDriver> uvc_camera_driver)
     : node_(node),
-      device_(device),
-      parameters_(parameters),
-      uvc_camera_driver_(uvc_camera_driver),
+      device_(std::move(device)),
+      parameters_(std::move(parameters)),
+      uvc_camera_driver_(std::move(uvc_camera_driver)),
       logger_(node->get_logger()),
       use_uvc_camera_(true) {
   init();
@@ -331,11 +331,8 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
                                       const stream_index_pair& stream_index) {
   int width = frame.getWidth();
   int height = frame.getHeight();
-  RCLCPP_INFO_STREAM(logger_, "new frame callback video mode " << frame.getVideoMode());
   CHECK(images_.count(stream_index));
-
   auto& image = images_.at(stream_index);
-
   if (image.size() != cv::Size(width, height)) {
     image.create(height, width, image.type());
   }

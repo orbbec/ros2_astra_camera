@@ -103,9 +103,14 @@ void OBCameraNode::setupCameraCtrlServices() {
         return getDeviceInfoCallback(request, response);
       });
   get_sdk_version_srv_ = node_->create_service<GetString>(
-      "get_sdk_version", [this](const std::shared_ptr<GetString::Request> request,
-                                std::shared_ptr<GetString::Response> response) {
+      "get_sdk_version", [](const std::shared_ptr<GetString::Request> request,
+                            std::shared_ptr<GetString::Response> response) {
         return getSDKVersion(request, response);
+      });
+  get_camera_info_srv_ = node_->create_service<GetCameraInfo>(
+      "get_camera_info", [this](const std::shared_ptr<GetCameraInfo::Request> request,
+                                std::shared_ptr<GetCameraInfo::Response> response) {
+        return getCameraInfoCallback(request, response);
       });
 }
 
@@ -243,6 +248,13 @@ bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Re
   return true;
 }
 
+bool OBCameraNode::getCameraInfoCallback(const std::shared_ptr<GetCameraInfo::Request>& request,
+                                         std::shared_ptr<GetCameraInfo::Response>& response) {
+  auto camera_info = getColorCameraInfo();
+  response->info = *camera_info;
+  return true;
+}
+
 bool OBCameraNode::getSDKVersion(const std::shared_ptr<GetString::Request>& request,
                                  std::shared_ptr<GetString::Response>& response) {
   (void)request;
@@ -267,7 +279,7 @@ bool OBCameraNode::toggleSensorCallback(const std::shared_ptr<SetBool::Request>&
 
 bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enabled,
                                 std::string& msg) {
-  if(!device_->hasSensor(stream_index.first)){
+  if (!device_->hasSensor(stream_index.first)) {
     std::stringstream ss;
 
     ss << "doesn't  have " << stream_name_[stream_index];

@@ -1,10 +1,12 @@
 
+#include <utility>
+
 #include "astra_camera/uvc_camara_driver.h"
 #include "astra_camera/utils.h"
 
 namespace astra_camera {
-UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, const UVCCameraConfig& config)
-    : node_(node), logger_(node_->get_logger()) {
+UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
+    : node_(node), logger_(node_->get_logger()), config_(std::move(config)) {
   frame_id_ = getNoSlashNamespace() + "_rgb_optical_frame";
   auto err = uvc_init(&ctx_, nullptr);
   if (err != UVC_SUCCESS) {
@@ -13,13 +15,9 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, const UVCCameraConfig& conf
     exit(err);
   }
   setupCameraControlService();
-  image_publisher_ = image_transport::create_publisher(node_, "rgb/image_raw");
-  camera_info_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(node);
-  if (!config_.camera_info_url.empty()) {
-    camera_info_manager_->loadCameraInfo(config_.camera_info_url);
-  } else {
-    RCLCPP_WARN_STREAM(logger_, "camera_info_url is empty");
-  }
+  image_publisher_ = image_transport::create_publisher(node_, "color/image_raw");
+  camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
+      "color/camera_info", rclcpp::QoS{1}.best_effort());
   openCamera();
 }
 
@@ -36,6 +34,7 @@ UVCCameraDriver::~UVCCameraDriver() {
 }
 
 void UVCCameraDriver::openCamera() {
+  RCLCPP_INFO_STREAM(logger_, "open uvc camera");
   uvc_error_t err;
   auto serial_number = config_.serial_number.empty() ? nullptr : config_.serial_number.c_str();
   CHECK(device_ == nullptr);
@@ -188,8 +187,13 @@ sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
   using namespace std::chrono_literals;
   while (!get_camera_info_cli_->wait_for_service(1s)) {
     CHECK(rclcpp::ok()) << "Interrupted while waiting for the service. Exiting.";
-
   }
+  using ServiceResponseFuture = rclcpp::Client<GetCameraInfo>::SharedFuture;
+  auto request = std::make_shared<GetCameraInfo::Request>();
+  auto future = get_camera_info_cli_->async_send_request(request);
+  const auto& result = future.get();
+  camera_info_ = result->info;
+  return result->info;
 }
 
 void UVCCameraDriver::updateConfig(const UVCCameraConfig& config) { config_ = config; }
@@ -265,7 +269,12 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     memcpy(&(image.data[0]), frame_buffer_->data, frame_buffer_->data_bytes);
   }
   if (!camera_info_.has_value()) {
+    getCameraInfo();
   }
+  if (camera_info_.has_value()) {
+    camera_info_publisher_->publish(*camera_info_);
+  }
+  image_publisher_.publish(image);
 }
 
 void UVCCameraDriver::frameCallbackWrapper(uvc_frame_t* frame, void* ptr) {

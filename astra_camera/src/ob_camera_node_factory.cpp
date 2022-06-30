@@ -22,7 +22,7 @@ void OBCameraNodeFactory::init() {
   }
   device_connected_.store(false);
   parameters_ = std::make_shared<Parameters>(this);
-  use_uvc_camera_ = declare_parameter<bool>("use_uvc_camera", false);
+  use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
   device_uri_ = declare_parameter<std::string>("device_uri", "");
   auto connected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceConnected(device_info);
@@ -35,7 +35,14 @@ void OBCameraNodeFactory::init() {
   check_connection_timer_ = this->create_wall_timer(1s, [this] { checkConnectionTimer(); });
 }
 
-void OBCameraNodeFactory::setupUVCCameraConfig() {}
+void OBCameraNodeFactory::setupUVCCameraConfig() {
+  uvc_config_.vendor_id = static_cast<int>(declare_parameter<int>("uvc_camera.vid", 0));
+  uvc_config_.product_id = static_cast<int>(declare_parameter<int>("uvc_camera.pid", 0));
+  uvc_config_.width = static_cast<int>(declare_parameter<int>("uvc_camera.weight", 640));
+  uvc_config_.height = static_cast<int>(declare_parameter<int>("uvc_camera.height", 480));
+  uvc_config_.fps = static_cast<int>(declare_parameter<int>("uvc_camera.fps", 30));
+  uvc_config_.format = declare_parameter<std::string>("uvc_camera.format", "mjpeg");
+}
 
 void OBCameraNodeFactory::startDevice() {
   if (ob_camera_node_) {
