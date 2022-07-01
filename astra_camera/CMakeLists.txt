@@ -14,16 +14,19 @@ endif ()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
-find_package(Eigen3 REQUIRED)
+find_package(astra_camera_msgs REQUIRED)
 find_package(builtin_interfaces REQUIRED)
-find_package(cv_bridge REQUIRED)
 find_package(camera_info_manager REQUIRED)
+find_package(class_loader REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(glog REQUIRED)
-find_package(image_transport REQUIRED)
+find_package(image_geometry REQUIRED)
 find_package(image_publisher REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(libuvc REQUIRED)
 find_package(magic_enum REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(astra_camera_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rcutils REQUIRED)
@@ -34,7 +37,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(libuvc REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES)
@@ -56,7 +58,31 @@ message(STATUS "ORRBEC : ${HOST_PLATFORM}")
 set(ORBBEC_OPENNI2_REDIST
   "${CMAKE_CURRENT_SOURCE_DIR}/openni2_redist/${HOST_PLATFORM}")
 
+set(dependencies
+  ament_index_cpp
+  astra_camera_msgs
+  builtin_interfaces
+  class_loader
+  cv_bridge
+  Eigen3
+  image_geometry
+  image_publisher
+  image_transport
+  rclcpp
+  rclcpp_components
+  rcutils
+  sensor_msgs
+  std_msgs
+  std_srvs
+  tf2
+  tf2_msgs
+  tf2_ros
+  tf2_sensor_msgs
+  )
+
 add_library(${PROJECT_NAME} SHARED
+  src/point_cloud_proc/point_cloud_xyz.cpp
+  src/point_cloud_proc/point_cloud_xyzrgb.cpp
   src/device_listener.cpp
   src/dynamic_params.cpp
   src/ob_camera_info.cpp
@@ -71,36 +97,6 @@ add_library(${PROJECT_NAME} SHARED
   src/uvc_camera_driver.cpp
   )
 
-set(dependencies
-  ament_index_cpp
-  builtin_interfaces
-  cv_bridge
-  camera_info_manager
-  Eigen3
-  image_transport
-  image_publisher
-  astra_camera_msgs
-  rclcpp
-  rclcpp_components
-  rcutils
-  sensor_msgs
-  std_msgs
-  std_srvs
-  tf2
-  tf2_msgs
-  tf2_ros
-  tf2_sensor_msgs
-  )
-
-ament_target_dependencies(${PROJECT_NAME}
-  ${dependencies}
-  )
-
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "astra_camera::OBCameraNodeFactory"
-  EXECUTABLE astra_camera_node
-  )
-
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -108,8 +104,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   ${OpenCV_INCLUDED_DIRS}
   )
 
+ament_target_dependencies(${PROJECT_NAME}
+  ${dependencies}
+  )
 target_link_libraries(${PROJECT_NAME}
-  ${ORBBEC_SDK_LIBRARIES}
   ${OpenCV_LIBS}
   Eigen3::Eigen
   glog::glog
@@ -118,6 +116,13 @@ target_link_libraries(${PROJECT_NAME}
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   )
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE "COMPOSITION_BUILDING_DLL")
+
+rclcpp_components_register_nodes(${PROJECT_NAME}
+  "${PROJECT_NAME}::PointCloudXyzrgbNode"
+  "${PROJECT_NAME}::PointCloudXyzNode"
+  "${PROJECT_NAME}::OBCameraNodeFactory")
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
