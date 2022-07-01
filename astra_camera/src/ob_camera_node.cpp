@@ -209,7 +209,7 @@ void OBCameraNode::getParameters() {
         "camera_" + stream_name_[stream_index] + "_optical_frame";
     param_name = stream_name_[stream_index] + "_optical_frame_id";
     setAndGetNodeParameter(optical_frame_id_[stream_index], param_name, default_optical_frame_id);
-    depth_aligned_frame_id_[stream_index] = stream_name_[COLOR] + "_optical_frame";
+    depth_aligned_frame_id_[stream_index] = "camera_" + stream_name_[COLOR] + "_optical_frame";
   }
 
   setAndGetNodeParameter(publish_tf_, "publish_tf", true);
@@ -235,7 +235,8 @@ void OBCameraNode::setupPublishers() {
   for (const auto& stream_index : IMAGE_STREAMS) {
     std::string name = stream_name_[stream_index];
     std::string topic = name + "/image_raw";
-    image_publishers_[stream_index] = image_transport::create_publisher(node_, topic);
+    image_publishers_[stream_index] =
+        image_transport::create_publisher(node_, topic, rmw_qos_profile_sensor_data);
     topic = name + "/camera_info";
     camera_info_publishers_[stream_index] =
         node_->create_publisher<CameraInfo>(topic, rclcpp::QoS{1}.best_effort());
@@ -348,7 +349,9 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   }
   auto timestamp = node_->now();
   camera_info->header.stamp = timestamp;
-  camera_info->header.frame_id = optical_frame_id_[stream_index];
+  camera_info->header.frame_id =
+      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
+
   camera_info_publisher->publish(std::move(camera_info));
 
   auto image_msg =
@@ -356,7 +359,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   CHECK_NOTNULL(image_msg);
   image_msg->header.stamp = timestamp;
   image_msg->header.frame_id =
-      depth_registration_ ? optical_frame_id_[stream_index] : depth_aligned_frame_id_[stream_index];
+      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
   image_msg->width = width;
   image_msg->height = height;
   image_msg->step = width * unit_step_size_[stream_index];

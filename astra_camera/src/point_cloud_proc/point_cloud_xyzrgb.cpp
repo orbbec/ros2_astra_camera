@@ -76,17 +76,18 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions& options)
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
-  pub_point_cloud_ = create_publisher<PointCloud2>("color/points", rclcpp::SensorDataQoS());
+  pub_point_cloud_ = create_publisher<PointCloud2>("depth/color/points", rclcpp::SensorDataQoS());
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
 }
 
-void PointCloudXyzrgbNode::convertRgb(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
-                sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg, int red_offset,
-                int green_offset, int blue_offset, int color_step) {
+void PointCloudXyzrgbNode::convertRgb(const sensor_msgs::msg::Image::ConstSharedPtr& rgb_msg,
+                                      sensor_msgs::msg::PointCloud2::SharedPtr& cloud_msg,
+                                      int red_offset, int green_offset, int blue_offset,
+                                      int color_step) {
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(*cloud_msg, "r");
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(*cloud_msg, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(*cloud_msg, "b");
-  const uint8_t *rgb = &rgb_msg->data[0];
+  const uint8_t* rgb = &rgb_msg->data[0];
   int rgb_skip = rgb_msg->step - rgb_msg->width * color_step;
   for (int v = 0; v < static_cast<int>(cloud_msg->height); ++v, rgb += rgb_skip) {
     for (int u = 0; u < static_cast<int>(cloud_msg->width);
@@ -101,26 +102,25 @@ void PointCloudXyzrgbNode::convertRgb(const sensor_msgs::msg::Image::ConstShared
 void PointCloudXyzrgbNode::connectCb() {
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement getNumSubscribers when rcl/rmw support it
-  if (!sub_depth_.getSubscriber()) {
-    // parameter for depth_image_transport hint
-    std::string depth_image_transport_param = "depth_image_transport";
-    image_transport::TransportHints depth_hints(this, "raw", depth_image_transport_param);
+  // parameter for depth_image_transport hint
+  std::string depth_image_transport_param = "depth_image_transport";
+  image_transport::TransportHints depth_hints(this, "raw", depth_image_transport_param);
 
-    // depth image can use different transport.(e.g. compressedDepth)
-    sub_depth_.subscribe(this, "depth/image_raw", depth_hints.getTransport(),
-                         rmw_qos_profile_sensor_data);
+  // depth image can use different transport.(e.g. compressedDepth)
+  sub_depth_.subscribe(this, "depth/image_raw", depth_hints.getTransport(),
+                       rmw_qos_profile_sensor_data);
 
-    // rgb uses normal ros transport hints.
-    image_transport::TransportHints hints(this, "raw");
-    sub_rgb_.subscribe(this, "color/image_raw", hints.getTransport(), rmw_qos_profile_sensor_data);
-    sub_info_.subscribe(this, "color/camera_info", rmw_qos_profile_sensor_data);
-  }
+  // rgb uses normal ros transport hints.
+  image_transport::TransportHints hints(this, "raw");
+  sub_rgb_.subscribe(this, "color/image_raw", hints.getTransport(), rmw_qos_profile_sensor_data);
+  sub_info_.subscribe(this, "color/camera_info", rmw_qos_profile_sensor_data);
 }
 
 void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
                                    const Image::ConstSharedPtr& rgb_msg_in,
                                    const CameraInfo::ConstSharedPtr& info_msg) {
   // Check for bad inputs
+  RCLCPP_ERROR_STREAM(logger_, "PointCloudXyzrgbNode::imageCb");
   if (depth_msg->header.frame_id != rgb_msg_in->header.frame_id) {
     RCLCPP_WARN_THROTTLE(logger_, *get_clock(),
                          10000,  // 10 seconds

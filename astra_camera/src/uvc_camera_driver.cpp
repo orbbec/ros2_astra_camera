@@ -7,7 +7,7 @@
 namespace astra_camera {
 UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
     : node_(node), logger_(node_->get_logger()), config_(std::move(config)) {
-  frame_id_ = getNoSlashNamespace() + "_rgb_optical_frame";
+  frame_id_ = getNoSlashNamespace() + "_color_optical_frame";
   auto err = uvc_init(&ctx_, nullptr);
   if (err != UVC_SUCCESS) {
     uvc_perror(err, "ERROR: uvc_init");
@@ -15,7 +15,8 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
     exit(err);
   }
   setupCameraControlService();
-  image_publisher_ = image_transport::create_publisher(node_, "color/image_raw");
+  image_publisher_ =
+      image_transport::create_publisher(node_, "color/image_raw", rmw_qos_profile_sensor_data);
   camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
       "color/camera_info", rclcpp::QoS{1}.best_effort());
   openCamera();
