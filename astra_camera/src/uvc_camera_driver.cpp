@@ -230,6 +230,8 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
   image.width = frame->width;
   image.height = frame->height;
   image.step = image.width * unit_step;
+  image.header.frame_id = frame_id_;
+  image.header.stamp = node_->now();
   image.data.resize(image.height * image.step);
   if (frame->frame_format == UVC_FRAME_FORMAT_BGR) {
     image.encoding = "bgr8";

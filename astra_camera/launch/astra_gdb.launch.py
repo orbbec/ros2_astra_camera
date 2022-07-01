@@ -18,19 +18,17 @@ def generate_launch_description():
                 package='astra_camera',
                 plugin='astra_camera::OBCameraNodeFactory',
                 name='astra_camera',
-                namespace='camera',
                 parameters=[params_file]),
             ComposableNode(
                 package='astra_camera',
                 plugin='astra_camera::PointCloudXyzNode',
-                namespace='camera',
                 name='point_cloud_xyz'),
             ComposableNode(
                 package='astra_camera',
                 plugin='astra_camera::PointCloudXyzrgbNode',
-                namespace='camera',
                 name='point_cloud_xyzrgb')
         ],
         output='screen',
+        prefix=["xterm -e gdb -ex run --args"]
     )
     return LaunchDescription([container])
