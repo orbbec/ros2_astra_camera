@@ -194,6 +194,7 @@ sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
   auto future = get_camera_info_cli_->async_send_request(request);
   const auto& result = future.get();
   camera_info_ = result->info;
+  camera_info_->header.frame_id = frame_id_;
   return result->info;
 }
 
@@ -275,6 +276,7 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     getCameraInfo();
   }
   if (camera_info_.has_value()) {
+    camera_info_->header.stamp = node_->now();
     camera_info_publisher_->publish(*camera_info_);
   }
   image_publisher_.publish(image);

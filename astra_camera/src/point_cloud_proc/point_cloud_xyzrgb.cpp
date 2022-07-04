@@ -120,7 +120,6 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
                                    const Image::ConstSharedPtr& rgb_msg_in,
                                    const CameraInfo::ConstSharedPtr& info_msg) {
   // Check for bad inputs
-  RCLCPP_ERROR_STREAM(logger_, "PointCloudXyzrgbNode::imageCb");
   if (depth_msg->header.frame_id != rgb_msg_in->header.frame_id) {
     RCLCPP_WARN_THROTTLE(logger_, *get_clock(),
                          10000,  // 10 seconds
