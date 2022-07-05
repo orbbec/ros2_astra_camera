@@ -186,7 +186,7 @@ bool OBCameraNode::setAutoExposureCallback(
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     status = camera_settings->setAutoExposureEnabled(request->data);
-  } else if (stream_index == INFRA0) {
+  } else if (stream_index == INFRA1) {
     status = device_->setProperty(XN_MODULE_PROPERTY_AE, request->data);
   }
 

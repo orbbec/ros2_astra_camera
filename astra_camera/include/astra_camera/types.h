@@ -4,7 +4,6 @@
 #include <sensor_msgs/image_encodings.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
-
 #include <magic_enum.hpp>
 
 #include <openni2/OpenNI.h>
@@ -32,9 +31,10 @@ using stream_index_pair = std::pair<openni::SensorType, int>;
 
 const stream_index_pair COLOR{openni::SENSOR_COLOR, 0};
 const stream_index_pair DEPTH{openni::SENSOR_DEPTH, 0};
-const stream_index_pair INFRA0{openni::SENSOR_IR, 0};
+const stream_index_pair INFRA1{openni::SENSOR_IR, 0};
+const stream_index_pair INFRA2{openni::SENSOR_IR, 1};
 
-const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA0, COLOR};
+const std::vector<stream_index_pair> IMAGE_STREAMS = {DEPTH, INFRA1, COLOR};
 
 typedef enum {
   RGBResolution4_3 = 0,   // 4:3分辨率 如：640x480

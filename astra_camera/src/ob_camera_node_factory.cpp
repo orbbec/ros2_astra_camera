@@ -1,3 +1,6 @@
+#include <sys/shm.h>
+#include <unistd.h>
+
 #include "astra_camera/ob_camera_node_factory.h"
 
 namespace astra_camera {
@@ -23,7 +26,8 @@ void OBCameraNodeFactory::init() {
   device_connected_.store(false);
   parameters_ = std::make_shared<Parameters>(this);
   use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
-  device_uri_ = declare_parameter<std::string>("device_uri", "");
+  boot_order_ = static_cast<int>(declare_parameter<int>("boot_order", 0));
+  number_of_device_ = static_cast<int>(declare_parameter<int>("number_of_device", 1));
   setupUVCCameraConfig();
   auto connected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceConnected(device_info);
@@ -55,6 +59,12 @@ void OBCameraNodeFactory::startDevice() {
     if (uvc_camera_driver_) {
       uvc_camera_driver_.reset();
     }
+    char serial_number[64];
+    int data_size = sizeof(serial_number);
+    memset(serial_number, 0, data_size);
+    device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, (uint8_t*)&serial_number, &data_size);
+    serial_number_ = serial_number;
+    uvc_config_.serial_number = serial_number_;
     uvc_camera_driver_ = std::make_shared<UVCCameraDriver>(this, uvc_config_);
     ob_camera_node_ =
         std::make_unique<OBCameraNode>(this, device_, parameters_, uvc_camera_driver_);
@@ -66,7 +76,20 @@ void OBCameraNodeFactory::startDevice() {
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
   RCLCPP_INFO_STREAM(logger_, "device connect..." << device_info->getUri());
-  if (device_uri_.empty() || device_uri_ == device_info->getUri()) {
+  if (!device_connected_) {
+    int shm_id;
+    char* shm = nullptr;
+    shm_id = shmget((key_t)0401, 1, 0666 | IPC_CREAT);
+    if (shm_id == -1) {
+      RCLCPP_ERROR_STREAM(logger_, "Create Share Memory Error " << strerror(errno));
+      exit(-1);
+    }
+    shm = (char*)shmat(shm_id, nullptr, 0);
+    if (boot_order_ > 0) {
+      while (*shm != boot_order_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    }
     auto uri = device_info->getUri();
     if (uri == nullptr) {
       RCLCPP_ERROR_STREAM(logger_, "device " << device_info->getUsbProductId() << "uri is empty");
@@ -86,6 +109,17 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
     }
     CHECK(device_->hasSensor(openni::SENSOR_DEPTH));
     startDevice();
+    device_connected_.store(true);
+    *shm = static_cast<char>(boot_order_ + 1);
+    if (shmdt(shm) == -1) {
+      RCLCPP_ERROR_STREAM(logger_, "shm detach failed");
+      exit(-1);
+    }
+    if (*shm == number_of_device_) {
+      if (shmctl(shm_id, IPC_RMID, nullptr) == -1) {
+        RCLCPP_ERROR_STREAM(logger_, "remove shm identifier failed\n");
+      }
+    }
   }
 }
 

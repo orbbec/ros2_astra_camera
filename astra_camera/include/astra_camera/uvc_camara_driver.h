@@ -19,6 +19,7 @@ struct UVCCameraConfig {
   int width = 0;
   int height = 0;
   int fps = 0;
+  int index = 0;
   std::string serial_number;
   std::string format;
   UVCCameraConfig() = default;

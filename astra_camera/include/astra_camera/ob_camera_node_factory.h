@@ -45,9 +45,13 @@ class OBCameraNodeFactory : public rclcpp::Node {
   bool use_uvc_camera_;
   UVCCameraConfig uvc_config_;
   std::unique_ptr<DeviceListener> device_listener_ = nullptr;
+  std::string serial_number_;
+  std::string device_type_;
   std::string device_uri_;
   rclcpp::TimerBase::SharedPtr check_connection_timer_;
   std::atomic_bool device_connected_{false};
+  int boot_order_;
+  int number_of_device_;
 };
 
 }  // namespace astra_camera

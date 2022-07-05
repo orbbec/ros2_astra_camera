@@ -189,11 +189,11 @@ void OBCameraNode::setupConfig() {
   image_format_[COLOR] = CV_8UC3;
   encoding_[COLOR] = sensor_msgs::image_encodings::RGB8;
 
-  stream_name_[INFRA0] = "ir";
-  unit_step_size_[INFRA0] = sizeof(uint8_t);
-  format_[INFRA0] = openni::PIXEL_FORMAT_GRAY16;
-  image_format_[INFRA0] = CV_16UC1;
-  encoding_[INFRA0] = sensor_msgs::image_encodings::MONO16;
+  stream_name_[INFRA1] = "ir";
+  unit_step_size_[INFRA1] = sizeof(uint8_t);
+  format_[INFRA1] = openni::PIXEL_FORMAT_GRAY16;
+  image_format_[INFRA1] = CV_16UC1;
+  encoding_[INFRA1] = sensor_msgs::image_encodings::MONO16;
 }
 
 void OBCameraNode::getParameters() {

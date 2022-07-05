@@ -27,8 +27,8 @@ OBCameraParams OBCameraNode::getCameraParams() {
       video_mode = stream_video_mode_[DEPTH];
     } else if (stream_video_mode_.count(COLOR)) {
       video_mode = stream_video_mode_[COLOR];
-    } else if (stream_video_mode_.count(INFRA0)) {
-      video_mode = stream_video_mode_[INFRA0];
+    } else if (stream_video_mode_.count(INFRA1)) {
+      video_mode = stream_video_mode_[INFRA1];
     } else {
       RCLCPP_ERROR_STREAM(logger_, "have not found property video mode");
       CHECK(false);
@@ -142,8 +142,8 @@ double OBCameraNode::getFocalLength(const stream_index_pair& stream_index, int y
 }
 
 CameraInfo::UniquePtr OBCameraNode::getIRCameraInfo() {
-  int width = width_[INFRA0];
-  int height = height_[INFRA0];
+  int width = width_[INFRA1];
+  int height = height_[INFRA1];
   double depth_focal_length = getFocalLength(DEPTH, height);
   auto camera_info_ptr = getDefaultCameraInfo(width, height, depth_focal_length);
   auto camera_params = getCameraParams();
