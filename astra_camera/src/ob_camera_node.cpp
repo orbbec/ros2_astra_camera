@@ -37,6 +37,10 @@ OBCameraNode::OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> d
 OBCameraNode::~OBCameraNode() { clean(); }
 
 void OBCameraNode::clean() {
+  is_running_.store(false);
+  if (tf_thread_->joinable()) {
+    tf_thread_->join();
+  }
   stopStreams();
   for (const auto& stream_index : IMAGE_STREAMS) {
     if (streams_[stream_index]) {

@@ -24,6 +24,7 @@ void OBCameraNodeFactory::init() {
   parameters_ = std::make_shared<Parameters>(this);
   use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
   device_uri_ = declare_parameter<std::string>("device_uri", "");
+  setupUVCCameraConfig();
   auto connected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceConnected(device_info);
   };
@@ -51,7 +52,6 @@ void OBCameraNodeFactory::startDevice() {
   CHECK_NOTNULL(device_);
   CHECK_NOTNULL(parameters_);
   if (use_uvc_camera_) {
-    setupUVCCameraConfig();
     if (uvc_camera_driver_) {
       uvc_camera_driver_.reset();
     }
