@@ -90,7 +90,6 @@ add_library(${PROJECT_NAME} SHARED
   src/ob_timer_filter.cpp
   src/ob_camera_node_factory.cpp
   src/ob_camera_node.cpp
-  src/point_cloud_filter.cpp
   src/ros_param_backend.cpp
   src/ros_service.cpp
   src/utils.cpp
