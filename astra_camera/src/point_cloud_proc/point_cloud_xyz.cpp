@@ -39,7 +39,7 @@
 
 namespace astra_camera {
 
-PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions& options)
+PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions &options)
     : Node("PointCloudXyzNode", options) {
   // Read parameters
   queue_size_ = static_cast<int>(declare_parameter<int>("queue_size", 5));
@@ -57,8 +57,9 @@ PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions& options)
 
 template <typename T>
 void PointCloudXyzNode::convertDepth(const sensor_msgs::msg::Image::ConstSharedPtr &depth_msg,
-                  sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg,
-                  const image_geometry::PinholeCameraModel &model, double range_max) {
+                                     sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg,
+                                     const image_geometry::PinholeCameraModel &model,
+                                     double range_max) {
   // Use correct principal point from calibration
   auto center_x = static_cast<float>(model.cx());
   auto center_y = static_cast<float>(model.cy());
@@ -105,13 +106,14 @@ void PointCloudXyzNode::connectCb() {
 
     sub_depth_ = image_transport::create_camera_subscription(
         this, "depth/image_raw",
-        std::bind(&PointCloudXyzNode::depthCb, this, std::placeholders::_1, std::placeholders::_2),
+        [this](const sensor_msgs::msg::Image::ConstSharedPtr &msg,
+               const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) { depthCb(msg, info); },
         "raw", custom_qos);
   }
 }
 
-void PointCloudXyzNode::depthCb(const Image::ConstSharedPtr& depth_msg,
-                                const CameraInfo::ConstSharedPtr& info_msg) {
+void PointCloudXyzNode::depthCb(const Image::ConstSharedPtr &depth_msg,
+                                const CameraInfo::ConstSharedPtr &info_msg) {
   auto cloud_msg = std::make_shared<PointCloud2>();
   cloud_msg->header = depth_msg->header;
   cloud_msg->height = depth_msg->height;

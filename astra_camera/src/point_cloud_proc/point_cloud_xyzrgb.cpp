@@ -158,7 +158,8 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
     cv_rsz.header = cv_ptr->header;
     cv_rsz.encoding = cv_ptr->encoding;
     // FIXME:
-    cv::resize(cv_ptr->image.rowRange(0, depth_msg->height / ratio), cv_rsz.image,
+    int end_raw = std::min<int>(depth_msg->height / ratio, rgb_msg->height);
+    cv::resize(cv_ptr->image.rowRange(0, end_raw), cv_rsz.image,
                cv::Size(depth_msg->width, depth_msg->height));
     if ((rgb_msg->encoding == enc::RGB8) || (rgb_msg->encoding == enc::BGR8) ||
         (rgb_msg->encoding == enc::MONO8)) {

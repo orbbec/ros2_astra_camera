@@ -3,21 +3,19 @@
 
 namespace astra_camera {
 
-DeviceListener::DeviceListener( DeviceConnectedCb connected_cb,
-                                DeviceDisconnectedCb disconnected_cb)
+DeviceListener::DeviceListener(DeviceConnectedCb connected_cb, DeviceDisconnectedCb disconnected_cb)
     : openni::OpenNI::DeviceConnectedListener(),
       openni::OpenNI::DeviceDisconnectedListener(),
       openni::OpenNI::DeviceStateChangedListener(),
-      logger_(rclcpp::get_logger("device_listener")) ,
+      logger_(rclcpp::get_logger("device_listener")),
       connected_cb_(std::move(connected_cb)),
-      disconnected_cb_(std::move(disconnected_cb)){
+      disconnected_cb_(std::move(disconnected_cb)) {
   openni::OpenNI::addDeviceConnectedListener(this);
   openni::OpenNI::addDeviceDisconnectedListener(this);
   openni::OpenNI::addDeviceStateChangedListener(this);
   // get list of currently connected devices
   openni::Array<openni::DeviceInfo> device_info_list;
   openni::OpenNI::enumerateDevices(&device_info_list);
-  std::cout << "device_info_list size " << device_info_list.getSize() << std::endl;
   for (int i = 0; i < device_info_list.getSize(); ++i) {
     onDeviceConnected(&device_info_list[i]);
   }
@@ -45,7 +43,5 @@ void DeviceListener::onDeviceDisconnected(const openni::DeviceInfo* pInfo) {
 
   disconnected_cb_(pInfo);
 }
-
-
 
 }  // namespace astra_camera

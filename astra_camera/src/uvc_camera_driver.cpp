@@ -16,6 +16,7 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
   os << "format: " << config.format << std::endl;
   return os;
 }
+
 UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
     : node_(node), logger_(node_->get_logger()), config_(std::move(config)) {
   frame_id_ = getNoSlashNamespace() + "_color_optical_frame";
@@ -327,6 +328,7 @@ void UVCCameraDriver::autoControlsCallback(enum uvc_status_class status_class, i
 
 bool UVCCameraDriver::getUVCExposureCb(const std::shared_ptr<GetInt32::Request>& request,
                                        std::shared_ptr<GetInt32::Response>& response) {
+  (void)request;
   uint32_t data;
   uvc_error_t err = uvc_get_exposure_abs(device_handle_, &data, UVC_GET_CUR);
   if (err != UVC_SUCCESS) {
@@ -485,5 +487,6 @@ bool UVCCameraDriver::toggleUVCCamera(const std::shared_ptr<SetBool::Request>& r
   } else {
     stopStreaming();
   }
+  return true;
 }
 }  // namespace astra_camera
