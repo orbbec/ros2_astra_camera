@@ -31,3 +31,5 @@
       height: 360
       fps: 30
       format: "mjpeg"
+      vid : 0x2bc5
+      pid : 0x0559

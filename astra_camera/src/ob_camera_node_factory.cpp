@@ -76,7 +76,7 @@ void OBCameraNodeFactory::startDevice() {
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
   RCLCPP_INFO_STREAM(logger_, "device connect..." << device_info->getUri());
-  if (!device_connected_) {
+  if (!device_connected_ && device_info->getUri() != nullptr) {
     int shm_id;
     char* shm = nullptr;
     shm_id = shmget((key_t)0401, 1, 0666 | IPC_CREAT);
@@ -91,10 +91,6 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
       }
     }
     auto uri = device_info->getUri();
-    if (uri == nullptr) {
-      RCLCPP_ERROR_STREAM(logger_, "device " << device_info->getUsbProductId() << "uri is empty");
-      return;
-    }
     if (device_) {
       device_->close();
       device_.reset();
@@ -115,7 +111,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
       RCLCPP_ERROR_STREAM(logger_, "shm detach failed");
       exit(-1);
     }
-    if (*shm == number_of_device_) {
+    if (boot_order_ + 1 == number_of_device_) {
       if (shmctl(shm_id, IPC_RMID, nullptr) == -1) {
         RCLCPP_ERROR_STREAM(logger_, "remove shm identifier failed\n");
       }

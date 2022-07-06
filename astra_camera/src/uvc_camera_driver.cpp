@@ -5,6 +5,17 @@
 #include "astra_camera/utils.h"
 
 namespace astra_camera {
+std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
+  os << "vendor_id: " << std::hex << config.vendor_id << std::endl;
+  os << "product_id: " << std::hex << config.product_id << std::endl;
+  os << "width: " << config.width << std::endl;
+  os << "height: " << config.height << std::endl;
+  os << "fps: " << config.fps << std::endl;
+  os << "index: " << config.index << std::endl;
+  os << "serial_number: " << config.serial_number << std::endl;
+  os << "format: " << config.format << std::endl;
+  return os;
+}
 UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
     : node_(node), logger_(node_->get_logger()), config_(std::move(config)) {
   frame_id_ = getNoSlashNamespace() + "_color_optical_frame";
@@ -39,11 +50,12 @@ void UVCCameraDriver::openCamera() {
   uvc_error_t err;
   auto serial_number = config_.serial_number.empty() ? nullptr : config_.serial_number.c_str();
   CHECK(device_ == nullptr);
-  err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, serial_number);
+  err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, nullptr);
+  RCLCPP_INFO_STREAM(logger_, "uvc config: " << config_);
   if (err != UVC_SUCCESS) {
     RCLCPP_ERROR_STREAM(logger_, "Find device error " << uvc_strerror(err));
     uvc_unref_device(device_);
-    return;
+    exit(-1);
   }
   CHECK(device_handle_ == nullptr);
   err = uvc_open(device_, &device_handle_);

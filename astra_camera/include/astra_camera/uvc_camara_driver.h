@@ -29,6 +29,9 @@ struct UVCCameraConfig {
   UVCCameraConfig& operator=(UVCCameraConfig&&) = default;
 };
 
+// uvc camera config printer
+std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) ;
+
 class UVCCameraDriver {
  public:
   explicit UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config);
