@@ -59,12 +59,15 @@ void OBCameraNodeFactory::startDevice() {
     if (uvc_camera_driver_) {
       uvc_camera_driver_.reset();
     }
-    char serial_number[64];
-    int data_size = sizeof(serial_number);
-    memset(serial_number, 0, data_size);
-    device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, (uint8_t*)&serial_number, &data_size);
-    serial_number_ = serial_number;
-    uvc_config_.serial_number = serial_number_;
+    if (number_of_device_ > 1) {
+      char serial_number[64];
+      int data_size = sizeof(serial_number);
+      memset(serial_number, 0, data_size);
+      device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, (uint8_t*)&serial_number,
+                           &data_size);
+      serial_number_ = serial_number;
+      uvc_config_.serial_number = serial_number_;
+    }
     uvc_camera_driver_ = std::make_shared<UVCCameraDriver>(this, uvc_config_);
     ob_camera_node_ =
         std::make_unique<OBCameraNode>(this, device_, parameters_, uvc_camera_driver_);

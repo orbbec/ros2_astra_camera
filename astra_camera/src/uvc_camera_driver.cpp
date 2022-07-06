@@ -50,7 +50,7 @@ void UVCCameraDriver::openCamera() {
   uvc_error_t err;
   auto serial_number = config_.serial_number.empty() ? nullptr : config_.serial_number.c_str();
   CHECK(device_ == nullptr);
-  err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, nullptr);
+  err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, serial_number);
   RCLCPP_INFO_STREAM(logger_, "uvc config: " << config_);
   if (err != UVC_SUCCESS) {
     RCLCPP_ERROR_STREAM(logger_, "Find device error " << uvc_strerror(err));
