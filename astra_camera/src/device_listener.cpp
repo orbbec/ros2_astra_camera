@@ -19,12 +19,6 @@ DeviceListener::DeviceListener(DeviceConnectedCb connected_cb, DeviceDisconnecte
   // get list of currently connected devices
   openni::Array<openni::DeviceInfo> device_info_list;
   openni::OpenNI::enumerateDevices(&device_info_list);
-  device_sem_ = sem_open("astra_device_sem", O_CREAT | O_EXCL, 0644, 1);
-  if (device_sem_ == (void*)SEM_FAILED) {
-    RCLCPP_ERROR_STREAM(logger_, "Failed to create semaphore: " << strerror(errno));
-    exit(-1);
-  }
-  RCLCPP_ERROR_STREAM(logger_, "Created semaphore " << std::hex << device_sem_);
   for (int i = 0; i < device_info_list.getSize(); ++i) {
     onDeviceConnected(&device_info_list[i]);
   }
@@ -44,6 +38,12 @@ void DeviceListener::onDeviceStateChanged(const openni::DeviceInfo* device_info,
 
 void DeviceListener::onDeviceConnected(const openni::DeviceInfo* device_info) {
   RCLCPP_INFO_STREAM(logger_, "onDeviceConnected");
+  device_sem_ = sem_open("astra_device_sem", O_CREAT | O_EXCL, 0644, 1);
+  if (device_sem_ == (void*)SEM_FAILED) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to create semaphore: " << strerror(errno));
+    exit(-1);
+  }
+  RCLCPP_INFO_STREAM(logger_, "Created semaphore " << std::hex << device_sem_);
   auto ret = sem_wait(device_sem_);
   std::cout << "after sem_wait" << std::endl;
   if (!ret) {
