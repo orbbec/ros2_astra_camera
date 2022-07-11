@@ -1,4 +1,4 @@
-/**:
+/camera/camera2:
   ros__parameters:
     color_width: 640
     color_height: 360
@@ -22,8 +22,8 @@
     tf_publish_rate: 10.0
     reconnect_timeout: 6.0
     depth_registration: true
-    serial_number: ""
-    camera_link_frame_id: "camera_link"
+    serial_number: "CH26420002V"
+    camera_link_frame_id: "camera2_link"
     uvc_camera:
       enable: true
       width: 640
