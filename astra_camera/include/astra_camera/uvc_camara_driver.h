@@ -31,7 +31,7 @@ struct UVCCameraConfig {
 };
 
 // uvc camera config printer
-std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) ;
+std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config);
 
 class UVCCameraDriver {
  public:
@@ -46,6 +46,10 @@ class UVCCameraDriver {
   void startStreaming();
 
   void stopStreaming();
+
+  int getResolutionX() const;
+
+  int getResolutionY() const;
 
  private:
   void setupCameraControlService();

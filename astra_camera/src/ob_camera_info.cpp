@@ -72,32 +72,6 @@ OBCameraParams OBCameraNode::getCameraParams() {
   }
 }
 
-void OBCameraNode::setDepthToColorResolution(int width, int height) {
-  const auto pid = device_info_.getUsbProductId();
-  if (pid != DABAI_DCW_DEPTH_PID && pid != DABAI_DW_PID) {
-    return;
-  }
-  if (!depth_registration_) {
-    return;
-  }
-  if (width * 9 == height * 16) {
-    // 16:9
-    auto status = device_->setProperty(XN_MODULE_PROPERTY_D2C_RESOLUTION, RGBResolution16_9);
-    if (status != openni::STATUS_OK) {
-      RCLCPP_ERROR_STREAM(logger_, "setProperty XN_MODULE_PROPERTY_D2C_RESOLUTION "
-                                       << openni::OpenNI::getExtendedError());
-    }
-  } else if (width * 3 == height * 4) {
-    // 4:3
-    auto status = device_->setProperty(XN_MODULE_PROPERTY_D2C_RESOLUTION, RGBResolution4_3);
-    if (status != openni::STATUS_OK) {
-      RCLCPP_ERROR_STREAM(logger_, "setProperty XN_MODULE_PROPERTY_D2C_RESOLUTION "
-                                       << openni::OpenNI::getExtendedError());
-    }
-  } else {
-    RCLCPP_ERROR_STREAM(logger_, "NOT 16x9 or 4x3 resolution");
-  }
-}
 
 sensor_msgs::msg::CameraInfo OBCameraNode::OBCameraParamsToCameraInfo(
     const OBCameraParams& params) {

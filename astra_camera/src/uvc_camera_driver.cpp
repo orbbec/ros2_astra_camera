@@ -516,4 +516,7 @@ bool UVCCameraDriver::toggleUVCCamera(const std::shared_ptr<SetBool::Request>& r
   }
   return true;
 }
+int UVCCameraDriver::getResolutionX() const { return config_.width; }
+
+int UVCCameraDriver::getResolutionY() const { return config_.height; }
 }  // namespace astra_camera

@@ -106,8 +106,6 @@ void OBCameraNode::setupDevices() {
     }
   }
   device_info_ = device_->getDeviceInfo();
-  setImageRegistrationMode(depth_registration_);
-  setDepthColorSync(color_depth_synchronization_);
 }
 
 void OBCameraNode::setupFrameCallback() {
@@ -156,6 +154,22 @@ void OBCameraNode::setupVideoMode() {
 }
 
 void OBCameraNode::startStreams() {
+  int color_width = 0;
+  int color_height = 0;
+  if (use_uvc_camera_) {
+    CHECK_NOTNULL(uvc_camera_driver_);
+    color_width = uvc_camera_driver_->getResolutionX();
+    color_height = uvc_camera_driver_->getResolutionY();
+    uvc_camera_driver_->startStreaming();
+  } else {
+    color_width = stream_video_mode_[DEPTH].getResolutionX();
+    color_height = stream_video_mode_[DEPTH].getResolutionY();
+  }
+  setImageRegistrationMode(depth_registration_);
+  setDepthColorSync(color_depth_synchronization_);
+  if (depth_registration_) {
+    setDepthToColorResolution(color_width, color_height);
+  }
   for (const auto& stream_index : IMAGE_STREAMS) {
     if (enable_[stream_index] && !stream_started_[stream_index]) {
       CHECK(stream_video_mode_.count(stream_index));
@@ -169,10 +183,6 @@ void OBCameraNode::startStreams() {
       streams_[stream_index]->start();
       RCLCPP_INFO_STREAM(logger_, magic_enum::enum_name(stream_index.first) << " is started");
     }
-  }
-  if (use_uvc_camera_) {
-    CHECK_NOTNULL(uvc_camera_driver_);
-    uvc_camera_driver_->startStreaming();
   }
 }
 
@@ -222,7 +232,7 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(tf_publish_rate_, "tf_publish_rate", 10.0);
   setAndGetNodeParameter(camera_link_frame_id_, "camera_link_frame_id", DEFAULT_BASE_FRAME_ID);
   setAndGetNodeParameter(depth_registration_, "depth_registration", true);
-  setAndGetNodeParameter(color_depth_synchronization_, "color_depth_synchronization", true);
+  setAndGetNodeParameter(color_depth_synchronization_, "color_depth_synchronization", false);
 }
 
 void OBCameraNode::setupTopics() {
@@ -378,6 +388,33 @@ void OBCameraNode::setDepthColorSync(bool data) {
   if (rc != openni::STATUS_OK) {
     RCLCPP_ERROR_STREAM(logger_, "Enabling depth color synchronization failed: "
                                      << openni::OpenNI::getExtendedError());
+  }
+}
+
+void OBCameraNode::setDepthToColorResolution(int width, int height) {
+  const auto pid = device_info_.getUsbProductId();
+  if (pid != DABAI_DCW_DEPTH_PID && pid != DABAI_DW_PID) {
+    return;
+  }
+  if (!depth_registration_) {
+    return;
+  }
+  if (width * 9 == height * 16) {
+    // 16:9
+    auto status = device_->setProperty(XN_MODULE_PROPERTY_D2C_RESOLUTION, RGBResolution16_9);
+    if (status != openni::STATUS_OK) {
+      RCLCPP_ERROR_STREAM(logger_, "setProperty XN_MODULE_PROPERTY_D2C_RESOLUTION "
+                                       << openni::OpenNI::getExtendedError());
+    }
+  } else if (width * 3 == height * 4) {
+    // 4:3
+    auto status = device_->setProperty(XN_MODULE_PROPERTY_D2C_RESOLUTION, RGBResolution4_3);
+    if (status != openni::STATUS_OK) {
+      RCLCPP_ERROR_STREAM(logger_, "setProperty XN_MODULE_PROPERTY_D2C_RESOLUTION "
+                                       << openni::OpenNI::getExtendedError());
+    }
+  } else {
+    RCLCPP_ERROR_STREAM(logger_, "NOT 16x9 or 4x3 resolution");
   }
 }
 
