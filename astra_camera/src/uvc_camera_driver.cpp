@@ -114,6 +114,7 @@ void UVCCameraDriver::setVideoMode() {
 
 void UVCCameraDriver::startStreaming() {
   if (is_streaming_started) {
+    RCLCPP_WARN_STREAM(logger_, "streaming is already started");
     return;
   }
   setVideoMode();
@@ -150,6 +151,7 @@ void UVCCameraDriver::startStreaming() {
 
 void UVCCameraDriver::stopStreaming() {
   if (!is_streaming_started) {
+    RCLCPP_WARN_STREAM(logger_, "streaming is already stopped");
     return;
   }
   RCLCPP_INFO_STREAM(logger_, "stop uvc streaming");
@@ -227,7 +229,6 @@ sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
   while (!get_camera_info_cli_->wait_for_service(1s)) {
     CHECK(rclcpp::ok()) << "Interrupted while waiting for the service. Exiting.";
   }
-  using ServiceResponseFuture = rclcpp::Client<GetCameraInfo>::SharedFuture;
   auto request = std::make_shared<GetCameraInfo::Request>();
   auto future = get_camera_info_cli_->async_send_request(request);
   const auto& result = future.get();
@@ -346,6 +347,7 @@ void UVCCameraDriver::autoControlsCallback(enum uvc_status_class status_class, i
                                            void* data, size_t data_len) {
   char buff[256];
   CHECK(data_len < 256);
+  (void)data;
   sprintf(buff, "Controls callback. class: %d, event: %d, selector: %d, attr: %d, data_len: %zu\n",
           status_class, event, selector, status_attribute, data_len);
   RCLCPP_INFO_STREAM(logger_, buff);

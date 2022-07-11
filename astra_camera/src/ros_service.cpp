@@ -145,6 +145,7 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
 bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& request,
                                    std::shared_ptr<SetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
+  (void)response;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
   camera_settings->setGain(request->data);
@@ -154,6 +155,7 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
 bool OBCameraNode::getAutoWhiteBalanceEnabledCallback(
     const std::shared_ptr<GetInt32::Request>& request,
     std::shared_ptr<GetInt32::Response>& response, const stream_index_pair& stream_index) {
+  (void)request;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
   response->data = camera_settings->getAutoWhiteBalanceEnabled();
@@ -206,6 +208,7 @@ bool OBCameraNode::setFanModeCallback(const std::shared_ptr<SetInt32::Request>& 
                                       std::shared_ptr<SetInt32::Response>& response) {
   device_->setProperty(XN_MODULE_PROPERTY_FAN_ENABLE, request->data);
   response->success = true;
+  return true;
 }
 
 bool OBCameraNode::setLaserEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
@@ -213,6 +216,7 @@ bool OBCameraNode::setLaserEnableCallback(const std::shared_ptr<SetInt32::Reques
   device_->setProperty(openni::OBEXTENSION_ID_LASER_EN, request->data);
   device_->setProperty(XN_MODULE_PROPERTY_EMITTER_STATE, request->data);
   response->success = true;
+  return true;
 }
 
 bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
@@ -221,6 +225,7 @@ bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetInt32::Request>
   stopStreams();
   device_->setProperty(openni::OBEXTENSION_ID_LDP_EN, request->data);
   startStreams();
+  return true;
 }
 
 bool OBCameraNode::setMirrorCallback(const std::shared_ptr<SetBool::Request>& request,
@@ -252,6 +257,11 @@ bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Re
   char serial_number[64];
   int data_size = sizeof(serial_number);
   auto rc = device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serial_number, &data_size);
+  if (rc == openni::STATUS_OK) {
+    response->info.serial_number = serial_number;
+  } else {
+    response->info.serial_number = "";
+  }
   response->info.serial_number = serial_number;
   return true;
 }
