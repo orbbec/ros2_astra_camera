@@ -162,8 +162,8 @@ void OBCameraNode::startStreams() {
     color_height = uvc_camera_driver_->getResolutionY();
     uvc_camera_driver_->startStreaming();
   } else {
-    color_width = stream_video_mode_[DEPTH].getResolutionX();
-    color_height = stream_video_mode_[DEPTH].getResolutionY();
+    color_width = stream_video_mode_[COLOR].getResolutionX();
+    color_height = stream_video_mode_[COLOR].getResolutionY();
   }
   setImageRegistrationMode(depth_registration_);
   setDepthColorSync(color_depth_synchronization_);
