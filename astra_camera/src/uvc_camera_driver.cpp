@@ -52,6 +52,18 @@ void UVCCameraDriver::openCamera() {
   auto serial_number = config_.serial_number.empty() ? nullptr : config_.serial_number.c_str();
   CHECK(device_ == nullptr);
   err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, serial_number);
+  if (err != UVC_SUCCESS) {
+    uvc_perror(err, "ERROR: uvc_find_device");
+    RCLCPP_ERROR_STREAM(logger_,
+                        "find uvc device failed, retry " << config_.retry_count << " times");
+    for (int i = 0; i < config_.retry_count; i++) {
+      err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, serial_number);
+      if (err == UVC_SUCCESS) {
+        break;
+      }
+      usleep(100 * i);
+    }
+  }
   RCLCPP_INFO_STREAM(logger_, "uvc config: " << config_);
   if (err != UVC_SUCCESS) {
     RCLCPP_ERROR_STREAM(logger_, "Find device error " << uvc_strerror(err));
@@ -106,7 +118,19 @@ void UVCCameraDriver::startStreaming() {
   setVideoMode();
   uvc_error_t stream_err =
       uvc_start_streaming(device_handle_, &ctrl_, &UVCCameraDriver::frameCallbackWrapper, this, 0);
-
+  if (stream_err != UVC_SUCCESS) {
+    RCLCPP_ERROR_STREAM(logger_, "uvc start streaming error " << uvc_strerror(stream_err)
+                                                              << " retry " << config_.retry_count
+                                                              << " times");
+    for (int i = 0; i < config_.retry_count; i++) {
+      stream_err = uvc_start_streaming(device_handle_, &ctrl_,
+                                       &UVCCameraDriver::frameCallbackWrapper, this, 0);
+      if (stream_err == UVC_SUCCESS) {
+        break;
+      }
+      usleep(100 * i);
+    }
+  }
   if (stream_err != UVC_SUCCESS) {
     uvc_perror(stream_err, "uvc_start_streaming");
     uvc_close(device_handle_);

@@ -14,6 +14,7 @@ def generate_container_node(camera_suffix, params_file):
         namespace='camera' + camera_suffix,
         package='rclcpp_components',
         executable='component_container',
+        prefix=["xterm -e gdb -ex run --args"],
         composable_node_descriptions=[
             ComposableNode(
                 package='astra_camera',

@@ -7,6 +7,7 @@
 #include "astra_camera/ob_camera_node.h"
 
 namespace astra_camera {
+
 void OBCameraNode::setupCameraCtrlServices() {
   using std_srvs::srv::SetBool;
   for (auto stream_index : IMAGE_STREAMS) {
@@ -250,6 +251,7 @@ bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Re
 
 bool OBCameraNode::getCameraInfoCallback(const std::shared_ptr<GetCameraInfo::Request>& request,
                                          std::shared_ptr<GetCameraInfo::Response>& response) {
+  (void)request;
   auto camera_info = getColorCameraInfo();
   response->info = *camera_info;
   return true;

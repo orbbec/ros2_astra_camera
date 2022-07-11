@@ -22,6 +22,7 @@ struct UVCCameraConfig {
   int index = 0;
   std::string serial_number;
   std::string format;
+  int retry_count = 0;
   UVCCameraConfig() = default;
   UVCCameraConfig(const UVCCameraConfig&) = default;
   UVCCameraConfig(UVCCameraConfig&&) = default;

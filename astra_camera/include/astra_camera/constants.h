@@ -114,5 +114,6 @@ const std::string OB_ASTRA_PLUS_S = "Orbbec Astra+_S";
 const std::string OB_DABAI_PRO = "Orbbec Astra DaBai Pro";
 const std::string OB_DABAI_DCW = "Orbbec DaBai DCW";
 const std::string OB_DABAI_DW = "Orbbec DaBai DW";
+const std::string DEFAULT_SEM_NAME = "astra_device_sem";
 
 }  // namespace astra_camera

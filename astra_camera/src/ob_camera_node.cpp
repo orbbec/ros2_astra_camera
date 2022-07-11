@@ -213,7 +213,9 @@ void OBCameraNode::getParameters() {
         "camera_" + stream_name_[stream_index] + "_optical_frame";
     param_name = stream_name_[stream_index] + "_optical_frame_id";
     setAndGetNodeParameter(optical_frame_id_[stream_index], param_name, default_optical_frame_id);
-    depth_aligned_frame_id_[stream_index] = "camera_" + stream_name_[COLOR] + "_optical_frame";
+  }
+  for (const auto& stream_index : IMAGE_STREAMS) {
+    depth_aligned_frame_id_[stream_index] = optical_frame_id_[COLOR];
   }
 
   setAndGetNodeParameter(publish_tf_, "publish_tf", true);

@@ -3,20 +3,20 @@
     color_width: 640
     color_height: 360
     color_fps: 30
-    color_frame_id: "color_frame"
-    color_optical_frame_id: "camera_color_optical_frame"
+    color_frame_id: "camera2_color_frame"
+    color_optical_frame_id: "camera2_color_optical_frame"
     enable_color: true
     ir_width: 640
     ir_height: 480
     ir_fps: 30
-    ir_frame_id: "ir_frame"
-    ir_optical_frame_id: "camera_ir_optical_frame"
+    ir_frame_id: "camera2_ir_frame"
+    ir_optical_frame_id: "camera2_camera_ir_optical_frame"
     enable_ir: true
     depth_width: 640
     depth_height: 360
     depth_fps: 30
-    depth_frame_id: "depth_frame"
-    depth_optical_frame_id: "camera_depth_optical_frame"
+    depth_frame_id: "camera2_depth_frame"
+    depth_optical_frame_id: "camera2_camera_depth_optical_frame"
     enable_depth: true
     publish_tf: true
     tf_publish_rate: 10.0
@@ -24,6 +24,7 @@
     depth_registration: true
     serial_number: "CH26420002V"
     camera_link_frame_id: "camera2_link"
+    number_of_devices: 2
     uvc_camera:
       enable: true
       width: 640

@@ -1,5 +1,3 @@
-#include <sys/shm.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include "astra_camera/ob_camera_node_factory.h"
 
@@ -15,17 +13,17 @@ OBCameraNodeFactory::OBCameraNodeFactory(const std::string& node_name, const std
   init();
 }
 
-OBCameraNodeFactory::~OBCameraNodeFactory() { openni::OpenNI::shutdown(); }
+OBCameraNodeFactory::~OBCameraNodeFactory() {
+  sem_unlink(DEFAULT_SEM_NAME.c_str());
+  openni::OpenNI::shutdown();
+}
 
 void OBCameraNodeFactory::init() {
-  openni::OpenNI::setLogMinSeverity(0);
-  openni::OpenNI::setLogFileOutput(true);
   auto rc = openni::OpenNI::initialize();
   if (rc != openni::STATUS_OK) {
     RCLCPP_ERROR(logger_, "Initialize failed\n%s\n", openni::OpenNI::getExtendedError());
     exit(-1);
   }
-  device_connected_.store(false);
   parameters_ = std::make_shared<Parameters>(this);
   use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
   serial_number_ = declare_parameter<std::string>("serial_number", "");
@@ -49,9 +47,11 @@ void OBCameraNodeFactory::setupUVCCameraConfig() {
   uvc_config_.height = static_cast<int>(declare_parameter<int>("uvc_camera.height", 480));
   uvc_config_.fps = static_cast<int>(declare_parameter<int>("uvc_camera.fps", 30));
   uvc_config_.format = declare_parameter<std::string>("uvc_camera.format", "mjpeg");
+  uvc_config_.retry_count = static_cast<int>(declare_parameter<int>("uvc_camera.retry_count", 500));
 }
 
 void OBCameraNodeFactory::startDevice() {
+  RCLCPP_INFO_STREAM(logger_, "starting device " << serial_number_);
   if (ob_camera_node_) {
     ob_camera_node_.reset();
   }
@@ -68,7 +68,8 @@ void OBCameraNodeFactory::startDevice() {
   } else {
     ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_);
   }
-  device_connected_.store(true);
+  RCLCPP_ERROR_STREAM(logger_, "device " << device_uri_ << " started");
+  device_connected_ = true;
 }
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
@@ -77,47 +78,50 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
     RCLCPP_ERROR_STREAM(logger_, "Device connected: " << device_info->getName() << " uri is null");
     return;
   }
-  auto device_sem = sem_open("astra_device_sem", O_CREAT, 0644, 1);
+  auto device_sem = sem_open(DEFAULT_SEM_NAME.c_str(), O_CREAT, 0644, 1);
   if (device_sem == (void*)SEM_FAILED) {
     RCLCPP_ERROR(logger_, "Failed to create semaphore");
     return;
   }
   RCLCPP_INFO_STREAM(logger_, "Waiting for device to be ready");
   int ret = sem_wait(device_sem);
-  if (!ret) {
+  if (!ret && !connected_devices_.count(device_info->getUri())) {
     auto device = std::make_shared<openni::Device>();
     RCLCPP_INFO_STREAM(logger_, "Trying to open device: " << device_info->getUri());
     auto rc = device->open(device_info->getUri());
     if (rc != openni::STATUS_OK) {
       RCLCPP_ERROR_STREAM(logger_, "Failed to open device: " << device_info->getUri() << " error: "
                                                              << openni::OpenNI::getExtendedError());
-      if (rc == openni::STATUS_DEVICE_IS_ALREADY_OPENED) {
+      if (errno == EBUSY) {
         RCLCPP_ERROR_STREAM(logger_, "Device is already opened");
         connected_devices_[device_info->getUri()] = *device_info;
       }
-    }
-    char serial_number[64];
-    int data_size = sizeof(serial_number);
-    rc = device->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serial_number, &data_size);
-    if (rc != openni::STATUS_OK) {
-      RCLCPP_ERROR_STREAM(logger_,
-                          "Failed to get serial number: " << openni::OpenNI::getExtendedError());
-    } else if (serial_number_.empty() || serial_number == serial_number_) {
-      RCLCPP_INFO_STREAM(logger_, "Device connected: " << device_info->getName()
-                                                       << " serial number: " << serial_number);
-      device_uri_ = device_info->getUri();
-      connected_devices_[device_uri_] = *device_info;
-      device_ = device;
-      startDevice();
+    } else {
+      char serial_number[64];
+      int data_size = sizeof(serial_number);
+      rc = device->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serial_number, &data_size);
+      if (rc != openni::STATUS_OK) {
+        RCLCPP_ERROR_STREAM(logger_,
+                            "Failed to get serial number: " << openni::OpenNI::getExtendedError());
+      } else if (serial_number_.empty() || serial_number == serial_number_) {
+        RCLCPP_INFO_STREAM(logger_, "Device connected: " << device_info->getName()
+                                                         << " serial number: " << serial_number);
+        device_uri_ = device_info->getUri();
+        connected_devices_[device_uri_] = *device_info;
+        device_ = device;
+        startDevice();
+      }
     }
     if (!device_connected_) {
       device->close();
     }
   }
+  RCLCPP_INFO_STREAM(logger_, "Release device semaphore");
   sem_post(device_sem);
+  RCLCPP_INFO_STREAM(logger_, "Release device semaphore done");
   if (connected_devices_.size() == number_of_devices_) {
-    RCLCPP_INFO(logger_, "All devices connected");
-    sem_unlink("astra_device_sem");
+    RCLCPP_INFO_STREAM(logger_, "All devices connected");
+    sem_unlink(DEFAULT_SEM_NAME.c_str());
   }
 }
 
@@ -134,13 +138,15 @@ void OBCameraNodeFactory::onDeviceDisconnected(const openni::DeviceInfo* device_
     if (uvc_camera_driver_) {
       uvc_camera_driver_.reset();
     }
-    device_connected_.store(false);
+    RCLCPP_INFO_STREAM(logger_, "Device disconnected: " << device_info->getUri());
+    device_connected_ = false;
+    sem_unlink(DEFAULT_SEM_NAME.c_str());
   }
 }
 
 void OBCameraNodeFactory::checkConnectionTimer() {
   if (!device_connected_) {
-    RCLCPP_INFO_STREAM(logger_, "wait for device connect...");
+    RCLCPP_INFO_STREAM(logger_, "wait for device connect... ");
   }
 }
 

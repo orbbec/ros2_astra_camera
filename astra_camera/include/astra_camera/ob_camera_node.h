@@ -228,7 +228,7 @@ class OBCameraNode {
   std::optional<OBCameraParams> camera_params_;
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;
-  bool color_depth_synchronization_;
+  bool color_depth_synchronization_ = false;
 };
 
 }  // namespace astra_camera
