@@ -68,7 +68,6 @@ void OBCameraNodeFactory::startDevice() {
   } else {
     ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_);
   }
-  RCLCPP_ERROR_STREAM(logger_, "device " << device_uri_ << " started");
   device_connected_ = true;
 }
 

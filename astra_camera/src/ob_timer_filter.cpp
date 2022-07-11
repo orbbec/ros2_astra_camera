@@ -18,8 +18,9 @@ double OBTimerFilter::getMedian() {
     std::sort(sort_buffer.begin(), sort_buffer.end());
 
     return sort_buffer[sort_buffer.size() / 2];
-  } else
+  } else {
     return 0.0;
+  }
 }
 
 double OBTimerFilter::getMovingAvg() {

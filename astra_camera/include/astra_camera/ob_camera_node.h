@@ -173,7 +173,7 @@ class OBCameraNode {
   rclcpp::Logger logger_;
   bool use_uvc_camera_ = false;
   openni::DeviceInfo device_info_;
-  std::atomic_bool is_running_;
+  std::atomic_bool is_running_{false};
   std::map<stream_index_pair, bool> enable_;
   std::map<stream_index_pair, bool> stream_started_;
   std::map<stream_index_pair, int> width_;
@@ -216,7 +216,7 @@ class OBCameraNode {
   rclcpp::Service<SetInt32>::SharedPtr set_fan_mode_srv_;
   rclcpp::Service<GetCameraInfo>::SharedPtr get_camera_info_srv_;
 
-  bool publish_tf_;
+  bool publish_tf_ = true;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
   std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_tf_broadcaster_;
   std::vector<geometry_msgs::msg::TransformStamped> static_tf_msgs_;
@@ -224,7 +224,7 @@ class OBCameraNode {
   std::shared_ptr<std::thread> tf_thread_;
   std::condition_variable tf_cv_;
   double tf_publish_rate_ = 10.0;
-  bool depth_registration_;
+  bool depth_registration_ = false;
   std::optional<OBCameraParams> camera_params_;
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;

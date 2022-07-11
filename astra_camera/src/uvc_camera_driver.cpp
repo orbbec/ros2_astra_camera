@@ -44,6 +44,7 @@ UVCCameraDriver::~UVCCameraDriver() {
   if (frame_buffer_) {
     uvc_free_frame(frame_buffer_);
   }
+  frame_buffer_ = nullptr;
 }
 
 void UVCCameraDriver::openCamera() {

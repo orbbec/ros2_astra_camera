@@ -246,6 +246,13 @@ bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Re
                                          std::shared_ptr<GetDeviceInfo::Response>& response) {
   (void)request;
   auto device_info = device_->getDeviceInfo();
+  response->info.name = device_info.getName();
+  response->info.pid = device_info.getUsbProductId();
+  response->info.vid = device_info.getUsbVendorId();
+  char serial_number[64];
+  int data_size = sizeof(serial_number);
+  auto rc = device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, serial_number, &data_size);
+  response->info.serial_number = serial_number;
   return true;
 }
 
@@ -293,8 +300,10 @@ bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enab
   if (enabled) {
     enable_[stream_index] = true;
   } else {
-    encoding_[stream_index];
+    enable_[stream_index] = false;
   }
+  stopStreams();
+  startStreams();
   return true;
 }
 }  // namespace astra_camera
