@@ -118,6 +118,12 @@ void OBCameraNode::setupFrameCallback() {
 }
 
 void OBCameraNode::setupVideoMode() {
+  if (enable_[INFRA1] && enable_[COLOR]) {
+    RCLCPP_WARN_STREAM(logger_,
+                       "Infrared and Color streams are enabled. "
+                       "Infrared stream will be disabled.");
+    enable_[INFRA1] = false;
+  }
   for (const auto& stream_index : IMAGE_STREAMS) {
     supported_video_modes_[stream_index] = std::vector<openni::VideoMode>();
     if (device_->hasSensor(stream_index.first) && enable_[stream_index]) {
@@ -154,6 +160,7 @@ void OBCameraNode::setupVideoMode() {
 }
 
 void OBCameraNode::startStreams() {
+  setupVideoMode();
   int color_width = 0;
   int color_height = 0;
   if (use_uvc_camera_) {
@@ -227,7 +234,6 @@ void OBCameraNode::getParameters() {
   for (const auto& stream_index : IMAGE_STREAMS) {
     depth_aligned_frame_id_[stream_index] = optical_frame_id_[COLOR];
   }
-
   setAndGetNodeParameter(publish_tf_, "publish_tf", true);
   setAndGetNodeParameter(tf_publish_rate_, "tf_publish_rate", 10.0);
   setAndGetNodeParameter(camera_link_frame_id_, "camera_link_frame_id", DEFAULT_BASE_FRAME_ID);
@@ -239,7 +245,6 @@ void OBCameraNode::setupTopics() {
   getParameters();
   setupFrameCallback();
   setupDevices();
-  setupVideoMode();
   setupCameraCtrlServices();
   setupPublishers();
   getCameraParams();
