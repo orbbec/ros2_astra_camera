@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <filesystem>
 #include "astra_camera/ob_camera_node_factory.h"
 
 namespace astra_camera {
@@ -19,6 +20,9 @@ OBCameraNodeFactory::~OBCameraNodeFactory() {
 }
 
 void OBCameraNodeFactory::init() {
+  if (std::filesystem::exists("/dev/shm/sem." + DEFAULT_SEM_NAME)) {
+    sem_unlink(DEFAULT_SEM_NAME.c_str());
+  }
   auto rc = openni::OpenNI::initialize();
   if (rc != openni::STATUS_OK) {
     RCLCPP_ERROR(logger_, "Initialize failed\n%s\n", openni::OpenNI::getExtendedError());
@@ -28,6 +32,7 @@ void OBCameraNodeFactory::init() {
   use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
   serial_number_ = declare_parameter<std::string>("serial_number", "");
   number_of_devices_ = declare_parameter<int>("number_of_devices", 1);
+  reconnection_delay_ = declare_parameter<int>("reconnection_delay", 1);
   setupUVCCameraConfig();
   auto connected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceConnected(device_info);
@@ -69,6 +74,10 @@ void OBCameraNodeFactory::startDevice() {
     ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_);
   }
   device_connected_ = true;
+  if (is_first_connection_) {
+    is_first_connection_ = false;
+    RCLCPP_INFO_STREAM(logger_, "first connection");
+  }
 }
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
@@ -108,6 +117,9 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
         device_uri_ = device_info->getUri();
         connected_devices_[device_uri_] = *device_info;
         device_ = device;
+        if (!is_first_connection_) {
+          std::this_thread::sleep_for(std::chrono::seconds(reconnection_delay_));
+        }
         startDevice();
       }
     }

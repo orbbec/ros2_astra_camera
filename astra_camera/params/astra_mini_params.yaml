@@ -22,5 +22,6 @@
     tf_publish_rate: 10.0
     reconnect_timeout: 6.0
     depth_registration: true
+    reconnection_delay: 3
     serial_number: ""
     camera_link_frame_id: "camera_link"

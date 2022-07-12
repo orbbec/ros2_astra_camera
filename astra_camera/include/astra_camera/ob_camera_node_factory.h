@@ -52,6 +52,8 @@ class OBCameraNodeFactory : public rclcpp::Node {
   std::atomic_bool device_connected_{false};
   size_t number_of_devices_;
   std::unordered_map<std::string, openni::DeviceInfo> connected_devices_;
+  long reconnection_delay_ = 0;
+  bool is_first_connection_ = true;
 };
 
 }  // namespace astra_camera
