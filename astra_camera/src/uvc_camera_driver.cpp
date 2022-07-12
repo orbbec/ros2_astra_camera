@@ -8,7 +8,7 @@ namespace astra_camera {
 std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
   os << "vendor_id: " << std::hex << config.vendor_id << std::endl;
   os << "product_id: " << std::hex << config.product_id << std::endl;
-  os << "width: " << config.width << std::endl;
+  os << "width: " << std::dec << config.width << std::endl;
   os << "height: " << config.height << std::endl;
   os << "fps: " << config.fps << std::endl;
   os << "index: " << config.index << std::endl;

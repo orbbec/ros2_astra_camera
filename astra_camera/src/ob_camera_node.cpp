@@ -160,7 +160,6 @@ void OBCameraNode::setupVideoMode() {
 }
 
 void OBCameraNode::startStreams() {
-  setupVideoMode();
   int color_width = 0;
   int color_height = 0;
   if (use_uvc_camera_) {
@@ -247,6 +246,7 @@ void OBCameraNode::setupTopics() {
   setupDevices();
   setupCameraCtrlServices();
   setupPublishers();
+  setupVideoMode();
   getCameraParams();
   publishStaticTransforms();
 }
