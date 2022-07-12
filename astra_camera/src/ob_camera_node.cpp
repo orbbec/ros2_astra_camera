@@ -120,7 +120,7 @@ void OBCameraNode::setupFrameCallback() {
 void OBCameraNode::setupVideoMode() {
   for (const auto& stream_index : IMAGE_STREAMS) {
     supported_video_modes_[stream_index] = std::vector<openni::VideoMode>();
-    if (device_->hasSensor(stream_index.first)) {
+    if (device_->hasSensor(stream_index.first) && enable_[stream_index]) {
       auto stream = streams_[stream_index];
       const auto& sensor_info = stream->getSensorInfo();
       const auto& supported_video_modes = sensor_info.getSupportedVideoModes();
