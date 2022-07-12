@@ -24,4 +24,3 @@
     depth_registration: true
     serial_number: ""
     camera_link_frame_id: "camera_link"
-    device_uri : ""

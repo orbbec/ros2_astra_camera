@@ -21,7 +21,6 @@
     publish_tf: true
     tf_publish_rate: 10.0
     reconnect_timeout: 6.0
-    depth_registration: true
+    depth_registration: false
     serial_number: ""
     camera_link_frame_id: "camera_link"
-    device_uri : ""

@@ -8,7 +8,9 @@ OBTimerFilter::~OBTimerFilter() = default;
 
 void OBTimerFilter::addSample(double sample) {
   buffer_.push_back(sample);
-  if (buffer_.size() > buffer_len_) buffer_.pop_front();
+  if (buffer_.size() > buffer_len_) {
+    buffer_.pop_front();
+  }
 }
 
 double OBTimerFilter::getMedian() {
@@ -25,18 +27,11 @@ double OBTimerFilter::getMedian() {
 
 double OBTimerFilter::getMovingAvg() {
   if (!buffer_.empty()) {
-    double sum = 0;
-
-    auto it = buffer_.begin();
-    auto it_end = buffer_.end();
-
-    while (it != it_end) {
-      sum += *(it++);
-    }
-
+    auto sum = std::accumulate(buffer_.begin(), buffer_.end(), 0.0);
     return sum / static_cast<double>(buffer_.size());
-  } else
+  } else {
     return 0.0;
+  }
 }
 
 void OBTimerFilter::clear() { buffer_.clear(); }

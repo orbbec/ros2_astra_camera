@@ -92,7 +92,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
       RCLCPP_ERROR_STREAM(logger_, "Failed to open device: " << device_info->getUri() << " error: "
                                                              << openni::OpenNI::getExtendedError());
       if (errno == EBUSY) {
-        RCLCPP_ERROR_STREAM(logger_, "Device is already opened");
+        RCLCPP_ERROR_STREAM(logger_, "Device is already opened OR device is in use");
         connected_devices_[device_info->getUri()] = *device_info;
       }
     } else {
