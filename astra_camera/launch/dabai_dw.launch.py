@@ -7,7 +7,7 @@ import yaml
 
 
 def generate_launch_description():
-    params_file = get_package_share_directory("astra_camera") + "/params/astra_mini_params.yaml"
+    params_file = get_package_share_directory("astra_camera") + "/params/dabai_dw_params.yaml"
     with open(params_file, 'r') as file:
         config_params = yaml.safe_load(file)['/**']['ros__parameters']
     container = ComposableNodeContainer(
