@@ -48,7 +48,7 @@ cd ~/ros2_ws/src
 Clone source code
 
 ```bash
-git clone gitlab@code.orbbec.com.cn:OrbbecSDK/orbbecros2sdk.git
+git clone gitlab@code.orbbec.com.cn:opennisdk/ros2_astra_camera.git
 ```
 
 Install deb dependencies
