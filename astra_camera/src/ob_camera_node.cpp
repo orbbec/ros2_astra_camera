@@ -56,6 +56,8 @@ void OBCameraNode::stopStreams() {
       streams_[stream_index]->stop();
       auto listener = stream_frame_listener_[stream_index];
       streams_[stream_index]->removeNewFrameListener(listener.get());
+      RCLCPP_INFO_STREAM(logger_, "Stopped stream " << stream_name_[stream_index]);
+      stream_started_[stream_index] = false;
     }
   }
 
@@ -160,6 +162,7 @@ void OBCameraNode::setupVideoMode() {
 }
 
 void OBCameraNode::startStreams() {
+  setupVideoMode();
   int color_width = 0;
   int color_height = 0;
   if (use_uvc_camera_) {
@@ -187,6 +190,7 @@ void OBCameraNode::startStreams() {
       CHECK_NOTNULL(stream_frame_listener_[stream_index]);
       streams_[stream_index]->addNewFrameListener(stream_frame_listener_[stream_index].get());
       streams_[stream_index]->start();
+      stream_started_[stream_index] = true;
       RCLCPP_INFO_STREAM(logger_, magic_enum::enum_name(stream_index.first) << " is started");
     }
   }

@@ -288,11 +288,11 @@ bool OBCameraNode::toggleSensorCallback(const std::shared_ptr<SetBool::Request>&
                                         std::shared_ptr<SetBool::Response>& response,
                                         const stream_index_pair& stream_index) {
   if (request->data) {
-    RCLCPP_INFO_STREAM(logger_, streams_[stream_index] << " ON");
+    RCLCPP_INFO_STREAM(logger_, stream_name_[stream_index] << " ON");
   } else {
-    RCLCPP_INFO_STREAM(logger_, streams_[stream_index] << " OFF");
+    RCLCPP_INFO_STREAM(logger_, stream_name_[stream_index] << " OFF");
   }
-  toggleSensor(stream_index, request->data, response->message);
+  response->success = toggleSensor(stream_index, request->data, response->message);
   return true;
 }
 
