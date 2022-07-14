@@ -11,6 +11,7 @@
 /**************************************************************************/
 
 #include <filesystem>
+#include <fcntl.h>
 #include "astra_camera/ob_camera_node_factory.h"
 
 namespace astra_camera {
