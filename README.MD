@@ -81,6 +81,13 @@ cmake .. && make -j4
 sudo make install
 sudo ldconfig
 ```
+install usb rules
+
+```bash
+cd astra_camera/scripts
+sudo bash install.sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
 
 ---
 
@@ -96,13 +103,13 @@ colcon build --event-handlers  console_direct+  --cmake-args  -DCMAKE_BUILD_TYPE
 Launch camera node
 * On terminal 1
 ```bash 
-. ./install/setup.bash 
+source ./install/setup.bash 
 ros2 launch astra_camera halley.launch.py
 ```
 * On terminal 2
 
 ```bash
-. ./install/setup.bash 
+source ./install/setup.bash 
 rviz2 -d src/astra_camera/rviz/astra.rviz
 ```
 * List topics / services/ parameters ( on terminal 3)
