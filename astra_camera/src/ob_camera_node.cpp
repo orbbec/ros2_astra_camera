@@ -309,8 +309,16 @@ void OBCameraNode::calcAndPublishStaticTransform() {
   auto rotation = camera_params_->r2l_r;
   auto transition = camera_params_->r2l_t;
   auto Q = rotationMatrixToQuaternion(rotation);
+  if (std::isnan(rotation[0])) {
+    Q.setRPY(0, 0, 0);
+  }
   Q = quaternion_optical * Q * quaternion_optical.inverse();
   std::vector<float> trans = {transition[0], transition[1], transition[2]};
+  if(std::isnan(transition[0])){
+    trans[0] = 0;
+    trans[1] = 0;
+    trans[2] = 0;
+  }
   rclcpp::Time tf_timestamp = node_->now();
 
   publishStaticTF(tf_timestamp, trans, Q, frame_id_[DEPTH], frame_id_[COLOR]);
