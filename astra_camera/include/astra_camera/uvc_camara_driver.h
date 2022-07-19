@@ -76,8 +76,6 @@ class UVCCameraDriver {
 
   void frameCallback(uvc_frame_t* frame);
 
-  std::string getNoSlashNamespace();
-
   void autoControlsCallback(enum uvc_status_class status_class, int event, int selector,
                             enum uvc_status_attribute status_attribute, void* data,
                             size_t data_len);
@@ -119,6 +117,8 @@ class UVCCameraDriver {
 
   bool toggleUVCCamera(const std::shared_ptr<SetBool::Request>& request,
                        std::shared_ptr<SetBool::Response>& response);
+
+  int UVCGetControl(int control, int unit, int len, uvc_req_code req_code);
 
  private:
   rclcpp::Node* node_;

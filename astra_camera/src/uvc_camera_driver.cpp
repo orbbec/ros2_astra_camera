@@ -15,6 +15,20 @@
 #include "astra_camera/uvc_camara_driver.h"
 #include "astra_camera/utils.h"
 
+#define DW_TO_INT(p) ((p)[0] | ((p)[1] << 8) | ((p)[2] << 16) | ((p)[3] << 24))
+/** Converts an unaligned two-byte little-endian integer into an int16 */
+#define SW_TO_SHORT(p) ((p)[0] | ((p)[1] << 8))
+/** Converts an int16 into an unaligned two-byte little-endian integer */
+#define SHORT_TO_SW(s, p) \
+  (p)[0] = (s);           \
+  (p)[1] = (s) >> 8;
+/** Converts an int32 into an unaligned four-byte little-endian integer */
+#define INT_TO_DW(i, p) \
+  (p)[0] = (i);         \
+  (p)[1] = (i) >> 8;    \
+  (p)[2] = (i) >> 16;   \
+  (p)[3] = (i) >> 24;
+
 namespace astra_camera {
 std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
   os << "vendor_id: " << std::hex << config.vendor_id << std::endl;
@@ -339,12 +353,6 @@ void UVCCameraDriver::frameCallbackWrapper(uvc_frame_t* frame, void* ptr) {
   driver->frameCallback(frame);
 }
 
-std::string UVCCameraDriver::getNoSlashNamespace() {
-  auto ns = node_->get_effective_namespace();
-  auto ns_vec = split(ns, '/');
-  return ns_vec.empty() ? "camera" : ns_vec.front();
-}
-
 void UVCCameraDriver::autoControlsCallbackWrapper(enum uvc_status_class status_class, int event,
                                                   int selector,
                                                   enum uvc_status_attribute status_attribute,
@@ -382,22 +390,28 @@ bool UVCCameraDriver::getUVCExposureCb(const std::shared_ptr<GetInt32::Request>&
 
 bool UVCCameraDriver::setUVCExposureCb(const std::shared_ptr<SetInt32::Request>& request,
                                        std::shared_ptr<SetInt32::Response>& response) {
-  uvc_set_ae_mode(device_handle_, 1);
-  if (request->data > 330) {
-    std::string msg = "Please set exposure lower than 330";
-    RCLCPP_ERROR_STREAM(logger_, "setUVCMirrorCb " << msg);
-    response->success = false;
-    response->message = msg;
+  if (request->data == 0) {
+    RCLCPP_ERROR_STREAM(logger_, "set auto mode");
+    uvc_error_t err = uvc_set_ae_mode(device_handle_, 8);  // 8才是自动8: aperture priority mode
+    RCLCPP_ERROR_STREAM(logger_, "uvc_set_ae_mode error " << uvc_strerror(err));
+    return true;
+  }
+  uint32_t max_expo, min_expo;
+  uvc_get_exposure_abs(device_handle_, &max_expo, UVC_GET_MIN);
+  uvc_get_exposure_abs(device_handle_, &min_expo, UVC_GET_MAX);
+  if (request->data < static_cast<int>(min_expo) || request->data > static_cast<int>(max_expo)) {
+    std::stringstream ss;
+    ss << "Exposure value out of range. Min: " << min_expo << ", Max: " << max_expo;
+    response->message = ss.str();
+    RCLCPP_ERROR_STREAM(logger_, response->message);
     return false;
   }
-  auto err = uvc_set_exposure_abs(device_handle_, request->data);
-  if (err != UVC_SUCCESS) {
-    RCLCPP_ERROR_STREAM(logger_, "setUVCMirrorCb " << uvc_strerror(err));
-    response->success = false;
-    response->message = uvc_strerror(err);
-    return false;
-  }
-  return true;
+  uvc_set_ae_mode(
+      device_handle_,
+      1);  // mode 1: manual mode; 2: auto mode; 4: shutter priority mode; 8: aperture priority mode
+
+  uvc_error_t err = uvc_set_exposure_abs(device_handle_, request->data);
+  return (err == UVC_SUCCESS);
 }
 
 bool UVCCameraDriver::getUVCGainCb(const std::shared_ptr<GetInt32::Request>& request,
@@ -417,15 +431,18 @@ bool UVCCameraDriver::getUVCGainCb(const std::shared_ptr<GetInt32::Request>& req
 
 bool UVCCameraDriver::setUVCGainCb(const std::shared_ptr<SetInt32::Request>& request,
                                    std::shared_ptr<SetInt32::Response>& response) {
-  auto err = uvc_set_gain(device_handle_, request->data);
-  if (err != UVC_SUCCESS) {
-    auto msg = uvc_strerror(err);
-    RCLCPP_ERROR_STREAM(logger_, "setUVCMirrorCb " << msg);
-    response->success = false;
-    response->message = msg;
+  uint16_t min_gain, max_gain;
+  uvc_get_gain(device_handle_, &min_gain, UVC_GET_MIN);
+  uvc_get_gain(device_handle_, &max_gain, UVC_GET_MAX);
+  if (request->data < min_gain || request->data > max_gain) {
+    std::stringstream ss;
+    ss << "Gain must be between " << min_gain << " and " << max_gain;
+    response->message = ss.str();
+    RCLCPP_ERROR_STREAM(logger_, response->message);
     return false;
   }
-  return true;
+  uvc_error_t err = uvc_set_gain(device_handle_, request->data);
+  return (err == UVC_SUCCESS);
 }
 
 bool UVCCameraDriver::getUVCWhiteBalanceCb(const std::shared_ptr<GetInt32::Request>& request,
@@ -445,13 +462,31 @@ bool UVCCameraDriver::getUVCWhiteBalanceCb(const std::shared_ptr<GetInt32::Reque
 
 bool UVCCameraDriver::setUVCWhiteBalanceCb(const std::shared_ptr<SetInt32::Request>& request,
                                            std::shared_ptr<SetInt32::Response>& response) {
-  uvc_set_white_balance_temperature_auto(device_handle_, 0);
-  auto err = uvc_set_white_balance_temperature(device_handle_, request->data);
-  if (err != UVC_SUCCESS) {
-    auto msg = uvc_strerror(err);
-    RCLCPP_ERROR_STREAM(logger_, "setUVCMirrorCb " << msg);
-    response->success = false;
-    response->message = msg;
+  if (request->data == 0) {
+    uvc_set_white_balance_temperature_auto(device_handle_, 1);
+    return true;
+  }
+  uvc_set_white_balance_temperature_auto(device_handle_, 0);  // 0: manual, 1: auto
+  uint8_t data[4];
+  INT_TO_DW(request->data, data);
+  int unit = uvc_get_processing_units(device_handle_)->bUnitID;
+  int control = UVC_PU_WHITE_BALANCE_TEMPERATURE_CONTROL;
+  int min_white_balance = UVCGetControl(control, unit, sizeof(int32_t), UVC_GET_MIN);
+  int max_white_balance = UVCGetControl(control, unit, sizeof(int32_t), UVC_GET_MAX);
+  if (request->data < min_white_balance || request->data > max_white_balance) {
+    std::stringstream ss;
+    ss << "Please set white balance between " << min_white_balance << "and " << max_white_balance;
+    response->message = ss.str();
+    RCLCPP_ERROR_STREAM(logger_, ss.str());
+    return false;
+  }
+  int ret = uvc_set_ctrl(device_handle_, unit, control, data, sizeof(int32_t));
+  if (ret != sizeof(int32_t)) {
+    auto err = static_cast<uvc_error_t>(ret);
+    std::stringstream ss;
+    ss << "set white balance failed " << uvc_strerror(err);
+    RCLCPP_ERROR_STREAM(logger_, ss.str());
+    response->message = ss.str();
     return false;
   }
   return true;
@@ -528,6 +563,19 @@ bool UVCCameraDriver::toggleUVCCamera(const std::shared_ptr<SetBool::Request>& r
   }
   return true;
 }
+
+int UVCCameraDriver::UVCGetControl(int control, int unit, int len, uvc_req_code req_code) {
+  uint8_t data[4];
+  int ret = uvc_get_ctrl(device_handle_, unit, control, data, len, req_code);
+  if (ret < 0) {
+    auto err = static_cast<uvc_error>(ret);
+    RCLCPP_ERROR(logger_, "Failed to get control %d on unit %d: %s", control, unit,
+                 uvc_strerror(err));
+    return -1;
+  }
+  return DW_TO_INT(data);
+}
+
 int UVCCameraDriver::getResolutionX() const { return config_.width; }
 
 int UVCCameraDriver::getResolutionY() const { return config_.height; }
