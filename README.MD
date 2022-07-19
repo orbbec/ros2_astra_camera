@@ -173,13 +173,20 @@ ros2 service call /camera/set_white_balance astra_camera_msgs/srv/SetInt32 '{dat
 
 ```bash
 ros2 service call  /camera/set_laser_enable std_srvs/srv/SetBool "{data: true}" 
-* ```
+```
+* set fan enable
+
+```bash
+ros2 service call /camera/set_fan_mode std_srvs/srv/SetBool "{data: true}
+```
 
 * toggle sensor
 
 ```bash
 ros2 service call  /camera/toggle_ir std_srvs/srv/SetBool "{data : true}"
-* ```
----
+ros2 service call /camera/toggle_uvc_camera std_srvs/srv/SetBool "{data : true}"
+```
+
 ## Known issues
+
 * TODO:

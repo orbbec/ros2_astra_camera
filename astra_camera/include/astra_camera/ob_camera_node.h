@@ -134,14 +134,14 @@ class OBCameraNode {
                                std::shared_ptr<std_srvs::srv::SetBool::Response>& response,
                                const stream_index_pair& stream_index);
 
-  bool setLaserEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
-                              std::shared_ptr<SetInt32::Response>& response);
+  bool setLaserEnableCallback(const std::shared_ptr<SetBool::Request>& request,
+                              std::shared_ptr<SetBool::Response>& response);
 
-  bool setLdpEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
-                            std::shared_ptr<SetInt32::Response>& response);
+  bool setLdpEnableCallback(const std::shared_ptr<SetBool::Request>& request,
+                            std::shared_ptr<SetBool::Response>& response);
 
-  bool setFanModeCallback(const std::shared_ptr<SetInt32::Request>& request,
-                          std::shared_ptr<SetInt32::Response>& response);
+  bool setFanCallback(const std::shared_ptr<SetBool::Request>& request,
+                          std::shared_ptr<SetBool::Response>& response);
 
   bool getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,
                              std::shared_ptr<GetDeviceInfo::Response>& response);
@@ -223,9 +223,9 @@ class OBCameraNode {
   std::map<stream_index_pair, rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr>
       set_auto_exposure_srv_;
   rclcpp::Service<GetDeviceInfo>::SharedPtr get_device_srv_;
-  rclcpp::Service<SetInt32>::SharedPtr set_laser_enable_srv_;
-  rclcpp::Service<SetInt32>::SharedPtr set_ldp_enable_srv_;
-  rclcpp::Service<SetInt32>::SharedPtr set_fan_mode_srv_;
+  rclcpp::Service<SetBool>::SharedPtr set_laser_enable_srv_;
+  rclcpp::Service<SetBool>::SharedPtr set_ldp_enable_srv_;
+  rclcpp::Service<SetBool>::SharedPtr set_fan_enable_srv_;
   rclcpp::Service<GetCameraInfo>::SharedPtr get_camera_info_srv_;
 
   bool publish_tf_ = true;

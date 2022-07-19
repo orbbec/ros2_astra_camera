@@ -55,14 +55,14 @@ const std::string EXTRINSICS_QOS = "EXTRINSICS_DEFAULT";
 
 const double IMU_FPS = 0;
 
-const bool ENABLE_DEPTH = true;
-const bool ENABLE_INFRA1 = true;
-const bool ENABLE_INFRA2 = true;
-const bool ENABLE_COLOR = true;
-const bool ENABLE_FISHEYE = true;
-const bool ENABLE_IMU = true;
+const bool ENABLE_DEPTH = false;
+const bool ENABLE_INFRA1 = false;
+const bool ENABLE_INFRA2 = false;
+const bool ENABLE_COLOR = false;
+const bool ENABLE_FISHEYE = false;
+const bool ENABLE_IMU = false;
 const bool HOLD_BACK_IMU_FOR_FRAMES = false;
-const bool PUBLISH_ODOM_TF = true;
+const bool PUBLISH_ODOM_TF = false;
 
 const std::string DEFAULT_BASE_FRAME_ID = "camera_link";
 const std::string DEFAULT_ODOM_FRAME_ID = "odom_frame";

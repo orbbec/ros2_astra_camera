@@ -23,6 +23,10 @@ namespace astra_camera {
 void OBCameraNode::setupCameraCtrlServices() {
   using std_srvs::srv::SetBool;
   for (auto stream_index : IMAGE_STREAMS) {
+    if (!enable_[stream_index]) {
+      RCLCPP_INFO_STREAM(logger_, stream_name_[stream_index] << " is not enable");
+      continue;
+    }
     auto stream_name = stream_name_[stream_index];
     std::string service_name = "get_" + stream_name + "_exposure";
     get_exposure_srv_[stream_index] = node_->create_service<GetInt32>(
@@ -93,20 +97,20 @@ void OBCameraNode::setupCameraCtrlServices() {
           return setMirrorCallback(request, response, stream_index);
         });
   }
-  set_fan_mode_srv_ = node_->create_service<SetInt32>(
-      "set_fan_mode", [this](const std::shared_ptr<SetInt32::Request> request,
-                             std::shared_ptr<SetInt32::Response> response) {
-        return setFanModeCallback(request, response);
+  set_fan_enable_srv_ = node_->create_service<SetBool>(
+      "set_fan_mode", [this](const std::shared_ptr<SetBool::Request> request,
+                             std::shared_ptr<SetBool::Response> response) {
+        return setFanCallback(request, response);
       });
 
-  set_laser_enable_srv_ = node_->create_service<SetInt32>(
-      "set_laser_enable", [this](const std::shared_ptr<SetInt32::Request> request,
-                                 std::shared_ptr<SetInt32::Response> response) {
+  set_laser_enable_srv_ = node_->create_service<SetBool>(
+      "set_laser_enable", [this](const std::shared_ptr<SetBool::Request> request,
+                                 std::shared_ptr<SetBool::Response> response) {
         return setLaserEnableCallback(request, response);
       });
-  set_ldp_enable_srv_ = node_->create_service<SetInt32>(
-      "set_ldp_enable", [this](const std::shared_ptr<SetInt32::Request> request,
-                               std::shared_ptr<SetInt32::Response> response) {
+  set_ldp_enable_srv_ = node_->create_service<SetBool>(
+      "set_ldp_enable", [this](const std::shared_ptr<SetBool::Request> request,
+                               std::shared_ptr<SetBool::Response> response) {
         setLdpEnableCallback(request, response);
       });
 
@@ -247,23 +251,23 @@ bool OBCameraNode::setAutoExposureCallback(
   }
 }
 
-bool OBCameraNode::setFanModeCallback(const std::shared_ptr<SetInt32::Request>& request,
-                                      std::shared_ptr<SetInt32::Response>& response) {
+bool OBCameraNode::setFanCallback(const std::shared_ptr<SetBool::Request>& request,
+                                  std::shared_ptr<SetBool::Response>& response) {
   device_->setProperty(XN_MODULE_PROPERTY_FAN_ENABLE, request->data);
   response->success = true;
   return true;
 }
 
-bool OBCameraNode::setLaserEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
-                                          std::shared_ptr<SetInt32::Response>& response) {
+bool OBCameraNode::setLaserEnableCallback(const std::shared_ptr<SetBool::Request>& request,
+                                          std::shared_ptr<SetBool::Response>& response) {
   device_->setProperty(openni::OBEXTENSION_ID_LASER_EN, request->data);
   device_->setProperty(XN_MODULE_PROPERTY_EMITTER_STATE, request->data);
   response->success = true;
   return true;
 }
 
-bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetInt32::Request>& request,
-                                        std::shared_ptr<SetInt32::Response>& response) {
+bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetBool::Request>& request,
+                                        std::shared_ptr<SetBool::Response>& response) {
   (void)response;
   stopStreams();
   device_->setProperty(openni::OBEXTENSION_ID_LDP_EN, request->data);
