@@ -1,10 +1,5 @@
 /**:
   ros__parameters:
-    color_width: 640
-    color_height: 360
-    color_fps: 30
-    color_frame_id: "color_frame"
-    color_optical_frame_id: "camera_color_optical_frame"
     enable_color: true
     ir_width: 640
     ir_height: 480
@@ -30,5 +25,7 @@
       height: 360
       fps: 30
       format: "mjpeg"
-      vid : 0x2bc5
-      pid : 0x0559
+      vid: 0x2bc5
+      pid: 0x0559
+      color_frame_id: "camera_color_frame"
+      optical_color_frame_id: "camera_optical_color_frame"

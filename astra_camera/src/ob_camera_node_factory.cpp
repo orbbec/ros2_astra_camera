@@ -64,6 +64,9 @@ void OBCameraNodeFactory::setupUVCCameraConfig() {
   uvc_config_.height = static_cast<int>(declare_parameter<int>("uvc_camera.height", 480));
   uvc_config_.fps = static_cast<int>(declare_parameter<int>("uvc_camera.fps", 30));
   uvc_config_.format = declare_parameter<std::string>("uvc_camera.format", "mjpeg");
+  uvc_config_.frame_id = declare_parameter<std::string>("uvc_camera.frame_id", "camera_color_frame");
+  uvc_config_.optical_frame_id =
+      declare_parameter<std::string>("uvc_camera.optical_frame_id", "camera_optical_color_frame");
   uvc_config_.retry_count = static_cast<int>(declare_parameter<int>("uvc_camera.retry_count", 500));
 }
 

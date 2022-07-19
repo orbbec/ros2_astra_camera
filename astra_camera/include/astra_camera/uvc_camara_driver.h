@@ -34,6 +34,8 @@ struct UVCCameraConfig {
   int index = 0;
   std::string serial_number;
   std::string format;
+  std::string frame_id;
+  std::string optical_frame_id;
   int retry_count = 0;
   UVCCameraConfig() = default;
   UVCCameraConfig(const UVCCameraConfig&) = default;
@@ -59,9 +61,9 @@ class UVCCameraDriver {
 
   void stopStreaming();
 
-  int getResolutionX() const;
+  [[nodiscard]] int getResolutionX() const;
 
-  int getResolutionY() const;
+  [[nodiscard]] int getResolutionY() const;
 
  private:
   void setupCameraControlService();
@@ -122,7 +124,6 @@ class UVCCameraDriver {
   rclcpp::Node* node_;
   rclcpp::Logger logger_;
   UVCCameraConfig config_;
-  std::string frame_id_;
   uvc_context_t* ctx_ = nullptr;
   uvc_device_t* device_ = nullptr;
   uvc_device_handle_t* device_handle_ = nullptr;

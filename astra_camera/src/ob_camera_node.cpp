@@ -181,7 +181,6 @@ void OBCameraNode::startStreams() {
     CHECK_NOTNULL(uvc_camera_driver_);
     color_width = uvc_camera_driver_->getResolutionX();
     color_height = uvc_camera_driver_->getResolutionY();
-    uvc_camera_driver_->startStreaming();
   } else {
     color_width = stream_video_mode_[COLOR].getResolutionX();
     color_height = stream_video_mode_[COLOR].getResolutionY();
@@ -205,6 +204,9 @@ void OBCameraNode::startStreams() {
       stream_started_[stream_index] = true;
       RCLCPP_INFO_STREAM(logger_, magic_enum::enum_name(stream_index.first) << " is started");
     }
+  }
+  if (use_uvc_camera_) {
+    uvc_camera_driver_->startStreaming();
   }
 }
 
@@ -242,7 +244,7 @@ void OBCameraNode::getParameters() {
     std::string default_frame_id = "camera_" + stream_name_[stream_index] + "_frame";
     setAndGetNodeParameter(frame_id_[stream_index], param_name, default_frame_id);
     std::string default_optical_frame_id =
-        "camera_" + stream_name_[stream_index] + "_optical_frame";
+        "camera_optical_" + stream_name_[stream_index] + "_frame";
     param_name = stream_name_[stream_index] + "_optical_frame_id";
     setAndGetNodeParameter(optical_frame_id_[stream_index], param_name, default_optical_frame_id);
   }

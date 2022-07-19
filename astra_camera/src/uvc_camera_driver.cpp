@@ -25,12 +25,13 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
   os << "index: " << config.index << std::endl;
   os << "serial_number: " << config.serial_number << std::endl;
   os << "format: " << config.format << std::endl;
+  os << "frame_id: " << config.frame_id << std::endl;
+  os << "optical_frame_id : " << config.optical_frame_id << std::endl;
   return os;
 }
 
 UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config)
     : node_(node), logger_(node_->get_logger()), config_(std::move(config)) {
-  frame_id_ = getNoSlashNamespace() + "_color_optical_frame";
   auto err = uvc_init(&ctx_, nullptr);
   if (err != UVC_SUCCESS) {
     uvc_perror(err, "ERROR: uvc_init");
@@ -244,7 +245,7 @@ sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
   auto future = get_camera_info_cli_->async_send_request(request);
   const auto& result = future.get();
   camera_info_ = result->info;
-  camera_info_->header.frame_id = frame_id_;
+  camera_info_->header.frame_id = config_.optical_frame_id;
   return result->info;
 }
 
@@ -282,7 +283,7 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
   image.width = frame->width;
   image.height = frame->height;
   image.step = image.width * unit_step;
-  image.header.frame_id = frame_id_;
+  image.header.frame_id = config_.optical_frame_id;
   image.header.stamp = node_->now();
   image.data.resize(image.height * image.step);
   if (frame->frame_format == UVC_FRAME_FORMAT_BGR) {

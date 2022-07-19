@@ -121,7 +121,8 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
                                    const CameraInfo::ConstSharedPtr& info_msg) {
   // Check for bad inputs
   if (depth_msg->header.frame_id != rgb_msg_in->header.frame_id) {
-    RCLCPP_WARN_THROTTLE(logger_, *get_clock(),
+    static auto clock = rclcpp::Clock(RCL_ROS_TIME);
+    RCLCPP_WARN_THROTTLE(logger_, clock,
                          100000,  // 10 seconds
                          "Depth image frame id [%s] doesn't match RGB image frame id [%s]",
                          depth_msg->header.frame_id.c_str(), rgb_msg_in->header.frame_id.c_str());
