@@ -135,7 +135,9 @@ ros2 service call /camera/get_sdk_version astra_camera_msgs/srv/GetString '{}'
 * Get exposure
 
 ```bash
-ros2 service call /camera/get_color_exposure astra_camera_msgs/srv/GetInt32 '{}'
+ros2 service call /camera/get_color_exposure astra_camera_msgs/srv/GetInt32 '{}' # OpenNI
+ros2 service call /camera/get_uvc_exposure astra_camera_msgs/srv/GetInt32 "{}"
+
 ```
 > If your check `ir` or `depth`, please change ` /camera/get_color_exposure`
 to  `/camera/get_ir_exposure` or `/camera/get_depth_exposure`, Same below.
@@ -143,18 +145,23 @@ to  `/camera/get_ir_exposure` or `/camera/get_depth_exposure`, Same below.
 * Get gain
 
 ```bash
-ros2 service call /camera/get_color_gain astra_camera_msgs/srv/GetInt32 '{}'
+ros2 service call /camera/get_color_gain astra_camera_msgs/srv/GetInt32 '{}' # OpenNI camera
+ros2 service call /camera/get_uvc_gain astra_camera_msgs/srv/GetInt32 "{}" # UVC camera
 ```
 * Get white balance
 
 ```bash
-ros2 service call /camera/get_white_balance astra_camera_msgs/srv/GetInt32 '{}'
+ros2 service call /camera/get_color_white_balance astra_camera_msgs/srv/GetInt32 '{}' # OpenNI camera
+ros2 service call /camera/get_ir_white_balance astra_camera_msgs/srv/GetInt32 '{}' # OpenNI camera
+ros2 service call /camera/get_depth_white_balance astra_camera_msgs/srv/GetInt32 '{}' # OpenNI camera
+ros2 service call /camera/get_uvc_white_balance astra_camera_msgs/srv/GetInt32 "{}" # uvc camera
 ```
 
 * Set auto exposure
 
 ```bash
-ros2 service call /camera/set_color_auto_exposure std_srvs/srv/SetBool '{data: false}'
+ros2 service call /camera/set_color_auto_exposure std_srvs/srv/SetBool '{data: false}' # OpeNI camera
+ros2 service call /camera/set_uvc_auto_exposure std_srvs/srv/SetBool '{data: false}' # uvc camera
 ```
 
 * Set white balance
