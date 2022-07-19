@@ -309,12 +309,15 @@ void OBCameraNode::calcAndPublishStaticTransform() {
   auto rotation = camera_params_->r2l_r;
   auto transition = camera_params_->r2l_t;
   auto Q = rotationMatrixToQuaternion(rotation);
-  if (std::isnan(rotation[0])) {
-    Q.setRPY(0, 0, 0);
+  for (int i = 0; i < 9; i++) {
+    if (std::isnan(rotation[i])) {
+      Q.setRPY(0, 0, 0);
+      break;
+    }
   }
   Q = quaternion_optical * Q * quaternion_optical.inverse();
   std::vector<float> trans = {transition[0], transition[1], transition[2]};
-  if(std::isnan(transition[0])){
+  if (std::isnan(transition[0]) || std::isnan(transition[1]) || std::isnan(transition[2])) {
     trans[0] = 0;
     trans[1] = 0;
     trans[2] = 0;
