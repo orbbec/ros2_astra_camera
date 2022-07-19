@@ -132,6 +132,11 @@ bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>&
                                        const stream_index_pair& stream_index) {
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->success = false;
+    response->message = "Camera settings not available";
+    return false;
+  }
   auto rc = camera_settings->setExposure(request->data);
   std::stringstream ss;
   if (rc != openni::STATUS_OK) {
@@ -150,6 +155,11 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
   (void)request;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->success = false;
+    response->message = "Camera settings not available";
+    return false;
+  }
   response->data = camera_settings->getGain();
   return true;
 }
@@ -160,6 +170,11 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
   (void)response;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->success = false;
+    response->message = "Camera settings not available";
+    return false;
+  }
   camera_settings->setGain(request->data);
   return true;
 }
@@ -170,6 +185,11 @@ bool OBCameraNode::getAutoWhiteBalanceEnabledCallback(
   (void)request;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->data = 0;
+    response->message = "Camera settings not available";
+    return false;
+  }
   response->data = camera_settings->getAutoWhiteBalanceEnabled();
   return true;
 }
@@ -179,6 +199,11 @@ bool OBCameraNode::setAutoWhiteBalanceEnabledCallback(
     std::shared_ptr<SetInt32 ::Response>& response, const stream_index_pair& stream_index) {
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->message = "Camera settings not available";
+    RCLCPP_ERROR_STREAM(logger_, response->message);
+    return false;
+  }
   auto data = request->data;
   auto rc = camera_settings->setAutoWhiteBalanceEnabled(data);
   if (rc != openni::STATUS_OK) {
@@ -200,6 +225,12 @@ bool OBCameraNode::setAutoExposureCallback(
   if (stream_index == COLOR || stream_index == DEPTH) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
+    if (camera_settings == nullptr) {
+      response->success = false;
+      response->message = "Couldn't set auto exposure";
+      RCLCPP_ERROR_STREAM(logger_, response->message);
+      return false;
+    }
     status = camera_settings->setAutoExposureEnabled(request->data);
   } else if (stream_index == INFRA1) {
     status = device_->setProperty(XN_MODULE_PROPERTY_AE, request->data);
@@ -255,6 +286,12 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
   (void)request;
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
+  if (camera_settings == nullptr) {
+    response->data = 0;
+    response->success = false;
+    response->message = "Couldn't get exposure";
+    return false;
+  }
   response->data = camera_settings->getExposure();
   return true;
 }
