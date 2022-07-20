@@ -162,6 +162,13 @@ void OBCameraNode::setupVideoMode() {
       }
       if (!is_supported_mode) {
         enable_[stream_index] = false;
+        RCLCPP_WARN_STREAM(logger_, "Video mode " << video_mode
+                                                  << "is not supported. "
+                                                     "Stream will be disabled.");
+        RCLCPP_INFO_STREAM(logger_, "Supported video modes: ");
+        for (const auto& item : supported_video_modes_[stream_index]) {
+          RCLCPP_INFO_STREAM(logger_, item);
+        }
       }
       if (is_supported_mode) {
         RCLCPP_INFO_STREAM(logger_,
@@ -200,7 +207,7 @@ void OBCameraNode::startStreams() {
       CHECK(stream_frame_listener_.count(stream_index));
       CHECK_NOTNULL(stream_frame_listener_[stream_index]);
       streams_[stream_index]->addNewFrameListener(stream_frame_listener_[stream_index].get());
-      streams_[stream_index]->start();
+      CHECK_EQ(streams_[stream_index]->start(), openni::STATUS_OK);
       stream_started_[stream_index] = true;
       RCLCPP_INFO_STREAM(logger_, magic_enum::enum_name(stream_index.first) << " is started");
     }
@@ -228,6 +235,9 @@ void OBCameraNode::setupConfig() {
   format_[INFRA1] = openni::PIXEL_FORMAT_GRAY16;
   image_format_[INFRA1] = CV_16UC1;
   encoding_[INFRA1] = sensor_msgs::image_encodings::MONO16;
+  for (const auto& stream_index : IMAGE_STREAMS) {
+    stream_started_[stream_index] = false;
+  }
 }
 
 void OBCameraNode::getParameters() {
@@ -239,7 +249,7 @@ void OBCameraNode::getParameters() {
     param_name = stream_name_[stream_index] + "_fps";
     setAndGetNodeParameter(fps_[stream_index], param_name, IMAGE_FPS);
     param_name = "enable_" + stream_name_[stream_index];
-    setAndGetNodeParameter(enable_[stream_index], param_name, true);
+    setAndGetNodeParameter(enable_[stream_index], param_name, false);
     param_name = stream_name_[stream_index] + "_frame_id";
     std::string default_frame_id = "camera_" + stream_name_[stream_index] + "_frame";
     setAndGetNodeParameter(frame_id_[stream_index], param_name, default_frame_id);
@@ -254,7 +264,7 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(publish_tf_, "publish_tf", true);
   setAndGetNodeParameter(tf_publish_rate_, "tf_publish_rate", 10.0);
   setAndGetNodeParameter(camera_link_frame_id_, "camera_link_frame_id", DEFAULT_BASE_FRAME_ID);
-  setAndGetNodeParameter(depth_registration_, "depth_registration", true);
+  setAndGetNodeParameter(depth_registration_, "depth_registration", false);
   setAndGetNodeParameter(color_depth_synchronization_, "color_depth_synchronization", false);
 }
 

@@ -33,7 +33,7 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<GetInt32::Request> request,
                                             std::shared_ptr<GetInt32::Response> response) {
-          return getExposureCallback(request, response, stream_index);
+          response->success = getExposureCallback(request, response, stream_index);
         });
 
     service_name = "set_" + stream_name + "_exposure";
@@ -41,14 +41,14 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetInt32::Request> request,
                                             std::shared_ptr<SetInt32::Response> response) {
-          return setExposureCallback(request, response, stream_index);
+          response->success = setExposureCallback(request, response, stream_index);
         });
     service_name = "get_" + stream_name + "_gain";
     get_gain_srv_[stream_index] = node_->create_service<GetInt32>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<GetInt32::Request> request,
                                             std::shared_ptr<GetInt32::Response> response) {
-          return getGainCallback(request, response, stream_index);
+          response->success = getGainCallback(request, response, stream_index);
         });
 
     service_name = "set_" + stream_name + "_gain";
@@ -56,14 +56,14 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetInt32::Request> request,
                                             std::shared_ptr<SetInt32::Response> response) {
-          return setGainCallback(request, response, stream_index);
+          response->success = setGainCallback(request, response, stream_index);
         });
     service_name = "set_" + stream_name + "_auto_exposure";
     set_auto_exposure_srv_[stream_index] = node_->create_service<SetBool>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetBool::Request> request,
                                             std::shared_ptr<SetBool::Response> response) {
-          return setAutoExposureCallback(request, response, stream_index);
+          response->success = setAutoExposureCallback(request, response, stream_index);
         });
 
     service_name = "toggle_" + stream_name;
@@ -72,14 +72,14 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetBool::Request> request,
                                             std::shared_ptr<SetBool::Response> response) {
-          return toggleSensorCallback(request, response, stream_index);
+          response->success = toggleSensorCallback(request, response, stream_index);
         });
     service_name = "get_" + stream_name + "_white_balance";
     get_white_balance_srv_[stream_index] = node_->create_service<GetInt32>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<GetInt32::Request> request,
                                             std::shared_ptr<GetInt32::Response> response) {
-          return getAutoWhiteBalanceEnabledCallback(request, response, stream_index);
+          response->success = getAutoWhiteBalanceEnabledCallback(request, response, stream_index);
         });
     service_name = "set_" + stream_name + "_white_balance";
 
@@ -87,47 +87,47 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetInt32::Request> request,
                                             std::shared_ptr<SetInt32::Response> response) {
-          return setAutoWhiteBalanceEnabledCallback(request, response, stream_index);
+          response->success =  setAutoWhiteBalanceEnabledCallback(request, response, stream_index);
         });
     service_name = "set_" + stream_name + "_mirror";
     set_mirror_srv_[stream_index] = node_->create_service<SetBool>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetBool::Request> request,
                                             std::shared_ptr<SetBool::Response> response) {
-          return setMirrorCallback(request, response, stream_index);
+          response->success =  setMirrorCallback(request, response, stream_index);
         });
   }
   set_fan_enable_srv_ = node_->create_service<SetBool>(
       "set_fan_mode", [this](const std::shared_ptr<SetBool::Request> request,
                              std::shared_ptr<SetBool::Response> response) {
-        return setFanCallback(request, response);
+        response->success =  setFanCallback(request, response);
       });
 
   set_laser_enable_srv_ = node_->create_service<SetBool>(
       "set_laser_enable", [this](const std::shared_ptr<SetBool::Request> request,
                                  std::shared_ptr<SetBool::Response> response) {
-        return setLaserEnableCallback(request, response);
+        response->success =  setLaserEnableCallback(request, response);
       });
   set_ldp_enable_srv_ = node_->create_service<SetBool>(
       "set_ldp_enable", [this](const std::shared_ptr<SetBool::Request> request,
                                std::shared_ptr<SetBool::Response> response) {
-        setLdpEnableCallback(request, response);
+        response->success =setLdpEnableCallback(request, response);
       });
 
   get_device_srv_ = node_->create_service<GetDeviceInfo>(
       "get_device_info", [this](const std::shared_ptr<GetDeviceInfo::Request> request,
                                 std::shared_ptr<GetDeviceInfo::Response> response) {
-        return getDeviceInfoCallback(request, response);
+        response->success = getDeviceInfoCallback(request, response);
       });
   get_sdk_version_srv_ = node_->create_service<GetString>(
       "get_sdk_version", [](const std::shared_ptr<GetString::Request> request,
                             std::shared_ptr<GetString::Response> response) {
-        return getSDKVersion(request, response);
+        response->success = getSDKVersion(request, response);
       });
   get_camera_info_srv_ = node_->create_service<GetCameraInfo>(
       "get_camera_info", [this](const std::shared_ptr<GetCameraInfo::Request> request,
                                 std::shared_ptr<GetCameraInfo::Response> response) {
-        return getCameraInfoCallback(request, response);
+        response->success = getCameraInfoCallback(request, response);
       });
 }
 
@@ -138,7 +138,7 @@ bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>&
   auto camera_settings = stream->getCameraSettings();
   if (camera_settings == nullptr) {
     response->success = false;
-    response->message = "Camera settings not available";
+    response->message = stream_name_[stream_index] + " Camera settings not available";
     return false;
   }
   auto rc = camera_settings->setExposure(request->data);
@@ -157,14 +157,21 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
                                    std::shared_ptr<GetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
   (void)request;
-  auto stream = streams_.at(stream_index);
-  auto camera_settings = stream->getCameraSettings();
-  if (camera_settings == nullptr) {
-    response->success = false;
-    response->message = "Camera settings not available";
-    return false;
+  if (stream_index == COLOR || stream_index == DEPTH) {
+    auto stream = streams_.at(stream_index);
+    auto camera_settings = stream->getCameraSettings();
+    if (camera_settings == nullptr) {
+      response->success = false;
+      response->message = stream_name_[stream_index] + " Camera settings not available";
+      return false;
+    }
+    response->data = camera_settings->getGain();
+  } else {
+    int data = 0;
+    int data_size = 4;
+    device_->getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, &data_size);
+    response->data = data;
   }
-  response->data = camera_settings->getGain();
   return true;
 }
 
@@ -172,14 +179,20 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
                                    std::shared_ptr<SetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
   (void)response;
-  auto stream = streams_.at(stream_index);
-  auto camera_settings = stream->getCameraSettings();
-  if (camera_settings == nullptr) {
-    response->success = false;
-    response->message = "Camera settings not available";
-    return false;
+  if (stream_index == COLOR || stream_index == DEPTH) {
+    auto stream = streams_.at(stream_index);
+    auto camera_settings = stream->getCameraSettings();
+    if (camera_settings == nullptr) {
+      response->success = false;
+      response->message = stream_name_[stream_index] + " Camera settings not available";
+      return false;
+    }
+    camera_settings->setGain(request->data);
+  } else {
+    int data = request->data;
+    int data_size = 4;
+    device_->setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, data_size);
   }
-  camera_settings->setGain(request->data);
   return true;
 }
 
@@ -191,7 +204,7 @@ bool OBCameraNode::getAutoWhiteBalanceEnabledCallback(
   auto camera_settings = stream->getCameraSettings();
   if (camera_settings == nullptr) {
     response->data = 0;
-    response->message = "Camera settings not available";
+    response->message = stream_name_[stream_index] + " Camera settings not available";
     return false;
   }
   response->data = camera_settings->getAutoWhiteBalanceEnabled();
@@ -204,7 +217,7 @@ bool OBCameraNode::setAutoWhiteBalanceEnabledCallback(
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
   if (camera_settings == nullptr) {
-    response->message = "Camera settings not available";
+    response->message = stream_name_[stream_index] + " Camera settings not available";
     RCLCPP_ERROR_STREAM(logger_, response->message);
     return false;
   }
@@ -231,7 +244,7 @@ bool OBCameraNode::setAutoExposureCallback(
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
       response->success = false;
-      response->message = "Couldn't set auto exposure";
+      response->message = stream_name_[stream_index] + " Camera settings not available";
       RCLCPP_ERROR_STREAM(logger_, response->message);
       return false;
     }
@@ -293,7 +306,7 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
   if (camera_settings == nullptr) {
     response->data = 0;
     response->success = false;
-    response->message = "Couldn't get exposure";
+    response->message = stream_name_[stream_index] + " Camera settings not available";
     return false;
   }
   response->data = camera_settings->getExposure();

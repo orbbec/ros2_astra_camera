@@ -75,7 +75,11 @@ OBCameraParams OBCameraNode::getCameraParams() {
       camera_params_data.depthRes = XN_CAMERA_PARAMS_DEPTH_RES_320_180;
       camera_params_data.colorRes = XN_CAMERA_PARAMS_COLOR_RES_320_180;
     } else {
-      CHECK(false);
+      OBCameraParams params;
+      data_size = sizeof(OBCameraParams);
+      device_->getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&params, &data_size);
+      camera_params_ = params;
+      return params;
     }
     device_->getProperty(openni::OBEXTENSION_ID_CAM_PARAMS, (uint8_t*)&camera_params_data,
                          &data_size);
@@ -83,7 +87,6 @@ OBCameraParams OBCameraNode::getCameraParams() {
     return camera_params_data.params;
   }
 }
-
 
 sensor_msgs::msg::CameraInfo OBCameraNode::OBCameraParamsToCameraInfo(
     const OBCameraParams& params) {
