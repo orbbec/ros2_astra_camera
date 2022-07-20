@@ -148,26 +148,45 @@ void OBCameraNode::setupVideoMode() {
       for (int i = 0; i < size; i++) {
         supported_video_modes_[stream_index].emplace_back(supported_video_modes[i]);
       }
-      openni::VideoMode video_mode;
+      openni::VideoMode video_mode, default_video_mode;
       video_mode.setResolution(width_[stream_index], height_[stream_index]);
+      default_video_mode.setResolution(width_[stream_index], height_[stream_index]);
       video_mode.setFps(fps_[stream_index]);
       video_mode.setPixelFormat(format_[stream_index]);
+      default_video_mode.setPixelFormat(format_[stream_index]);
       bool is_supported_mode = false;
+      bool is_default_mode_supported = false;
       for (const auto& item : supported_video_modes_[stream_index]) {
         if (video_mode == item) {
           is_supported_mode = true;
           stream_video_mode_[stream_index] = video_mode;
           break;
         }
+        if (default_video_mode.getResolutionX() == item.getResolutionX() &&
+            default_video_mode.getResolutionY() == item.getResolutionY() &&
+            default_video_mode.getPixelFormat() == item.getPixelFormat()) {
+          default_video_mode.setFps(item.getFps());
+          is_default_mode_supported = true;
+        }
       }
       if (!is_supported_mode) {
-        enable_[stream_index] = false;
-        RCLCPP_WARN_STREAM(logger_, "Video mode " << video_mode
-                                                  << "is not supported. "
-                                                     "Stream will be disabled.");
-        RCLCPP_INFO_STREAM(logger_, "Supported video modes: ");
-        for (const auto& item : supported_video_modes_[stream_index]) {
-          RCLCPP_INFO_STREAM(logger_, item);
+        RCLCPP_WARN_STREAM(logger_, "Video mode " << video_mode << " is not supported. ");
+        if (is_default_mode_supported) {
+          RCLCPP_WARN_STREAM(logger_, "Default video mode " << default_video_mode
+                                                            << " is supported. "
+                                                               "Stream will be enabled.");
+          stream_video_mode_[stream_index] = default_video_mode;
+          video_mode = default_video_mode;
+          is_supported_mode = true;
+        } else {
+          RCLCPP_WARN_STREAM(logger_, "Default video mode " << default_video_mode
+                                                            << "is not supported. "
+                                                               "Stream will be disabled.");
+          enable_[stream_index] = false;
+          RCLCPP_INFO_STREAM(logger_, "Supported video modes: ");
+          for (const auto& item : supported_video_modes_[stream_index]) {
+            RCLCPP_INFO_STREAM(logger_, item);
+          }
         }
       }
       if (is_supported_mode) {
