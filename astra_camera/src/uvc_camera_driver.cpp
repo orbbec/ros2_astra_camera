@@ -12,7 +12,7 @@
 
 #include <utility>
 
-#include "astra_camera/uvc_camara_driver.h"
+#include "astra_camera/uvc_camera_driver.h"
 #include "astra_camera/utils.h"
 
 #define DW_TO_INT(p) ((p)[0] | ((p)[1] << 8) | ((p)[2] << 16) | ((p)[3] << 24))

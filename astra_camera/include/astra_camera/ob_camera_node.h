@@ -43,7 +43,7 @@
 
 #include "constants.h"
 #include "utils.h"
-#include "uvc_camara_driver.h"
+#include "uvc_camera_driver.h"
 #include "dynamic_params.h"
 #include "types.h"
 #include "ob_frame_listener.h"

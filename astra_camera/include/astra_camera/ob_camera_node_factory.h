@@ -21,7 +21,7 @@
 #include <openni2/OpenNI.h>
 #include "dynamic_params.h"
 #include "ob_camera_node.h"
-#include "uvc_camara_driver.h"
+#include "uvc_camera_driver.h"
 #include "device_listener.h"
 
 namespace astra_camera {
