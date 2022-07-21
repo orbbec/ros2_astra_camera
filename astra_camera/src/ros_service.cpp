@@ -87,31 +87,38 @@ void OBCameraNode::setupCameraCtrlServices() {
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetInt32::Request> request,
                                             std::shared_ptr<SetInt32::Response> response) {
-          response->success =  setAutoWhiteBalanceEnabledCallback(request, response, stream_index);
+          response->success = setAutoWhiteBalanceEnabledCallback(request, response, stream_index);
         });
     service_name = "set_" + stream_name + "_mirror";
     set_mirror_srv_[stream_index] = node_->create_service<SetBool>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<SetBool::Request> request,
                                             std::shared_ptr<SetBool::Response> response) {
-          response->success =  setMirrorCallback(request, response, stream_index);
+          response->success = setMirrorCallback(request, response, stream_index);
+        });
+    service_name = "get_" + stream_name + "_supported_video_modes";
+    get_supported_video_modes_srv_[stream_index] = node_->create_service<GetString>(
+        service_name,
+        [this, stream_index = stream_index](const std::shared_ptr<GetString::Request> request,
+                                            std::shared_ptr<GetString::Response> response) {
+          response->success = getSupportedVideoModesCallback(request, response, stream_index);
         });
   }
   set_fan_enable_srv_ = node_->create_service<SetBool>(
       "set_fan_mode", [this](const std::shared_ptr<SetBool::Request> request,
                              std::shared_ptr<SetBool::Response> response) {
-        response->success =  setFanCallback(request, response);
+        response->success = setFanCallback(request, response);
       });
 
   set_laser_enable_srv_ = node_->create_service<SetBool>(
       "set_laser_enable", [this](const std::shared_ptr<SetBool::Request> request,
                                  std::shared_ptr<SetBool::Response> response) {
-        response->success =  setLaserEnableCallback(request, response);
+        response->success = setLaserEnableCallback(request, response);
       });
   set_ldp_enable_srv_ = node_->create_service<SetBool>(
       "set_ldp_enable", [this](const std::shared_ptr<SetBool::Request> request,
                                std::shared_ptr<SetBool::Response> response) {
-        response->success =setLdpEnableCallback(request, response);
+        response->success = setLdpEnableCallback(request, response);
       });
 
   get_device_srv_ = node_->create_service<GetDeviceInfo>(
@@ -382,4 +389,27 @@ bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enab
   startStreams();
   return true;
 }
+
+bool OBCameraNode::getSupportedVideoModesCallback(
+    const std::shared_ptr<GetString ::Request>& request,
+    std::shared_ptr<GetString ::Response>& response, const stream_index_pair& stream_index) {
+  (void)request;
+  if (!supported_video_modes_.count(stream_index)) {
+    response->data = "";
+    response->message = "No supported video modes";
+    return false;
+  } else {
+    auto modes = supported_video_modes_[stream_index];
+    nlohmann::json data;
+    for (auto& mode : modes) {
+      std::stringstream ss;
+      ss << mode.getResolutionX() << "x" << mode.getResolutionY() << "@" << mode.getFps() << " : "
+         << magic_enum::enum_name(mode.getPixelFormat()) << "\n";
+      data.push_back(ss.str());
+    }
+    response->data = data.dump(2);
+    return true;
+  }
+}
+
 }  // namespace astra_camera
