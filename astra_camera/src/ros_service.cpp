@@ -74,19 +74,19 @@ void OBCameraNode::setupCameraCtrlServices() {
                                             std::shared_ptr<SetBool::Response> response) {
           response->success = toggleSensorCallback(request, response, stream_index);
         });
-    service_name = "get_" + stream_name + "_white_balance";
+    service_name = "get_" + stream_name + "_auto_white_balance";
     get_white_balance_srv_[stream_index] = node_->create_service<GetInt32>(
         service_name,
         [this, stream_index = stream_index](const std::shared_ptr<GetInt32::Request> request,
                                             std::shared_ptr<GetInt32::Response> response) {
           response->success = getAutoWhiteBalanceEnabledCallback(request, response, stream_index);
         });
-    service_name = "set_" + stream_name + "_white_balance";
+    service_name = "set_" + stream_name + "_auto_white_balance";
 
-    set_white_balance_srv_[stream_index] = node_->create_service<SetInt32>(
+    set_white_balance_srv_[stream_index] = node_->create_service<SetBool>(
         service_name,
-        [this, stream_index = stream_index](const std::shared_ptr<SetInt32::Request> request,
-                                            std::shared_ptr<SetInt32::Response> response) {
+        [this, stream_index = stream_index](const std::shared_ptr<SetBool::Request> request,
+                                            std::shared_ptr<SetBool::Response> response) {
           response->success = setAutoWhiteBalanceEnabledCallback(request, response, stream_index);
         });
     service_name = "set_" + stream_name + "_mirror";
@@ -141,22 +141,36 @@ void OBCameraNode::setupCameraCtrlServices() {
 bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>& request,
                                        std::shared_ptr<SetInt32::Response>& response,
                                        const stream_index_pair& stream_index) {
-  auto stream = streams_.at(stream_index);
-  auto camera_settings = stream->getCameraSettings();
-  if (camera_settings == nullptr) {
-    response->success = false;
-    response->message = stream_name_[stream_index] + " Camera settings not available";
-    return false;
-  }
-  auto rc = camera_settings->setExposure(request->data);
-  std::stringstream ss;
-  if (rc != openni::STATUS_OK) {
-    ss << "Couldn't set color exposure: " << openni::OpenNI::getExtendedError();
-    response->message = ss.str();
-    RCLCPP_ERROR_STREAM(logger_, response->message);
-    return false;
+  if (stream_index == COLOR || stream_index == DEPTH) {
+    auto stream = streams_.at(stream_index);
+    auto camera_settings = stream->getCameraSettings();
+    if (camera_settings == nullptr) {
+      response->success = false;
+      response->message = stream_name_[stream_index] + " Camera settings not available";
+      return false;
+    }
+    auto rc = camera_settings->setExposure(request->data);
+    std::stringstream ss;
+    if (rc != openni::STATUS_OK) {
+      ss << "Couldn't set color exposure: " << openni::OpenNI::getExtendedError();
+      response->message = ss.str();
+      RCLCPP_ERROR_STREAM(logger_, response->message);
+      return false;
+    } else {
+      return true;
+    }
   } else {
-    return true;
+    auto data = static_cast<uint32_t>(request->data);
+    auto rc = device_->setProperty(openni::OBEXTENSION_ID_IR_EXP, data);
+    if (rc != openni::STATUS_OK) {
+      std::stringstream ss;
+      ss << "Couldn't set IR exposure: " << openni::OpenNI::getExtendedError();
+      response->message = ss.str();
+      RCLCPP_ERROR_STREAM(logger_, response->message);
+      return false;
+    } else {
+      return true;
+    }
   }
 }
 
@@ -219,8 +233,8 @@ bool OBCameraNode::getAutoWhiteBalanceEnabledCallback(
 }
 
 bool OBCameraNode::setAutoWhiteBalanceEnabledCallback(
-    const std::shared_ptr<SetInt32 ::Request>& request,
-    std::shared_ptr<SetInt32 ::Response>& response, const stream_index_pair& stream_index) {
+    const std::shared_ptr<SetBool::Request>& request, std::shared_ptr<SetBool::Response>& response,
+    const stream_index_pair& stream_index) {
   auto stream = streams_.at(stream_index);
   auto camera_settings = stream->getCameraSettings();
   if (camera_settings == nullptr) {
@@ -403,9 +417,10 @@ bool OBCameraNode::getSupportedVideoModesCallback(
     nlohmann::json data;
     for (auto& mode : modes) {
       std::stringstream ss;
-      ss << mode.getResolutionX() << "x" << mode.getResolutionY() << "@" << mode.getFps() << " : "
-         << magic_enum::enum_name(mode.getPixelFormat()) << "\n";
-      data.push_back(ss.str());
+      ss << mode.getResolutionX() << "x" << mode.getResolutionY() << "@" << mode.getFps();
+      if (data.empty() || data.back() != ss.str()) {
+        data.push_back(ss.str());
+      }
     }
     response->data = data.dump(2);
     return true;

@@ -126,8 +126,8 @@ class OBCameraNode {
                                           std::shared_ptr<GetInt32::Response>& response,
                                           const stream_index_pair& stream_index);
 
-  bool setAutoWhiteBalanceEnabledCallback(const std::shared_ptr<SetInt32 ::Request>& request,
-                                          std::shared_ptr<SetInt32 ::Response>& response,
+  bool setAutoWhiteBalanceEnabledCallback(const std::shared_ptr<SetBool::Request>& request,
+                                          std::shared_ptr<SetBool::Response>& response,
                                           const stream_index_pair& stream_index);
 
   bool setAutoExposureCallback(const std::shared_ptr<std_srvs::srv::SetBool::Request>& request,
@@ -222,7 +222,7 @@ class OBCameraNode {
   std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> set_mirror_srv_;
   std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> toggle_sensor_srv_;
   std::map<stream_index_pair, rclcpp::Service<GetInt32>::SharedPtr> get_white_balance_srv_;
-  std::map<stream_index_pair, rclcpp::Service<SetInt32>::SharedPtr> set_white_balance_srv_;
+  std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> set_white_balance_srv_;
   std::map<stream_index_pair, rclcpp::Service<GetString>::SharedPtr> get_supported_video_modes_srv_;
   rclcpp::Service<GetString>::SharedPtr get_sdk_version_srv_;
   std::map<stream_index_pair, rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr>
