@@ -45,7 +45,6 @@ void OBCameraNodeFactory::init() {
   serial_number_ = declare_parameter<std::string>("serial_number", "");
   number_of_devices_ = declare_parameter<int>("number_of_devices", 1);
   reconnection_delay_ = declare_parameter<int>("reconnection_delay", 1);
-  setupUVCCameraConfig();
   auto connected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceConnected(device_info);
   };
@@ -55,19 +54,6 @@ void OBCameraNodeFactory::init() {
   device_listener_ = std::make_unique<DeviceListener>(connected_cb, disconnected_cb);
   using namespace std::chrono_literals;
   check_connection_timer_ = this->create_wall_timer(1s, [this] { checkConnectionTimer(); });
-}
-
-void OBCameraNodeFactory::setupUVCCameraConfig() {
-  uvc_config_.vendor_id = static_cast<int>(declare_parameter<int>("uvc_camera.vid", 0));
-  uvc_config_.product_id = static_cast<int>(declare_parameter<int>("uvc_camera.pid", 0));
-  uvc_config_.width = static_cast<int>(declare_parameter<int>("uvc_camera.weight", 640));
-  uvc_config_.height = static_cast<int>(declare_parameter<int>("uvc_camera.height", 480));
-  uvc_config_.fps = static_cast<int>(declare_parameter<int>("uvc_camera.fps", 30));
-  uvc_config_.format = declare_parameter<std::string>("uvc_camera.format", "mjpeg");
-  uvc_config_.frame_id = declare_parameter<std::string>("uvc_camera.frame_id", "camera_color_frame");
-  uvc_config_.optical_frame_id =
-      declare_parameter<std::string>("uvc_camera.optical_frame_id", "camera_optical_color_frame");
-  uvc_config_.retry_count = static_cast<int>(declare_parameter<int>("uvc_camera.retry_count", 500));
 }
 
 void OBCameraNodeFactory::startDevice() {
@@ -81,8 +67,7 @@ void OBCameraNodeFactory::startDevice() {
     if (uvc_camera_driver_) {
       uvc_camera_driver_.reset();
     }
-    uvc_config_.serial_number = serial_number_;
-    uvc_camera_driver_ = std::make_shared<UVCCameraDriver>(this, uvc_config_);
+    uvc_camera_driver_ = std::make_shared<UVCCameraDriver>(this, parameters_, serial_number_);
     ob_camera_node_ =
         std::make_unique<OBCameraNode>(this, device_, parameters_, uvc_camera_driver_);
   } else {

@@ -64,12 +64,6 @@ class OBCameraNode {
 
   void init();
 
-  template <class T>
-  void setAndGetNodeParameter(
-      T& param, const std::string& param_name, const T& default_value,
-      const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
-          rcl_interfaces::msg::ParameterDescriptor());  // set and get parameter
-
  private:
   void setupCameraCtrlServices();
 
@@ -246,6 +240,8 @@ class OBCameraNode {
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;
   bool color_depth_synchronization_ = false;
+  ImageROI color_roi_;
+  ImageROI depth_roi_;
 };
 
 }  // namespace astra_camera

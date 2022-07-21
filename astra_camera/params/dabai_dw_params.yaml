@@ -1,11 +1,5 @@
 /**:
   ros__parameters:
-    color_width: 640
-    color_height: 480
-    color_fps: 30
-    color_frame_id: "camera_color_frame"
-    color_optical_frame_id: "camera_optical_color_frame"
-    enable_color: true
     ir_width: 640
     ir_height: 480
     ir_fps: 30

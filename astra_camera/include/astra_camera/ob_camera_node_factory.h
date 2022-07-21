@@ -45,7 +45,6 @@ class OBCameraNodeFactory : public rclcpp::Node {
 
   void checkConnectionTimer();
 
-  void setupUVCCameraConfig();
 
  private:
   rclcpp::Logger logger_;

@@ -10,7 +10,6 @@
 /*                                                                        */
 /**************************************************************************/
 
-
 #pragma once
 #include <functional>
 
@@ -27,6 +26,7 @@
 #include "constants.h"
 #include "types.h"
 #include "astra_camera_msgs/msg/extrinsics.hpp"
+#include "dynamic_params.h"
 
 namespace astra_camera {
 
@@ -48,4 +48,26 @@ bool isValidCameraParams(const OBCameraParams& params);
 
 std::vector<std::string> split(const std::string& str, char delim);
 
+// template <class T>
+// void setAndGetNodeParameter(const std::shared_ptr<Parameters>& parameters, T& param,
+//                             const std::string& param_name, const T& default_value,
+//                             const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor
+//                             =
+//                                 rcl_interfaces::msg::ParameterDescriptor());
+
+template <class T>
+void setAndGetNodeParameter(const std::shared_ptr<Parameters>& parameters, T& param,
+                            const std::string& param_name, const T& default_value,
+                            const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+                                rcl_interfaces::msg::ParameterDescriptor()) {
+  try {
+    param = parameters
+                ->setParam(param_name, rclcpp::ParameterValue(default_value),
+                           std::function<void(const rclcpp::Parameter&)>(), parameter_descriptor)
+                .get<T>();
+  } catch (const rclcpp::ParameterTypeException& ex) {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("setAndGetNodeParameter"),
+                        "Failed to set parameter: " << param_name << ". " << ex.what());
+  }
+}
 }  // namespace astra_camera

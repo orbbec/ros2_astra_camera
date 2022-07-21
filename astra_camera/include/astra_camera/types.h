@@ -53,4 +53,11 @@ typedef enum {
   RGBResolution16_9 = 1,  // 16:9分辨率 如：1920x1280
 } RgbResolution;
 
+struct ImageROI {
+  int x = -1;
+  int y = -1;
+  int width = -1;
+  int height = -1;
+};
+
 }  // namespace astra_camera

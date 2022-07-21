@@ -23,6 +23,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 
 #include "types.h"
+#include "dynamic_params.h"
 
 namespace astra_camera {
 struct UVCCameraConfig {
@@ -31,7 +32,6 @@ struct UVCCameraConfig {
   int width = 0;
   int height = 0;
   int fps = 0;
-  int index = 0;
   std::string serial_number;
   std::string format;
   std::string frame_id;
@@ -49,11 +49,9 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config);
 
 class UVCCameraDriver {
  public:
-  explicit UVCCameraDriver(rclcpp::Node* node, UVCCameraConfig config);
+  explicit UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters> parameters, const std::string& serial_number);
 
   ~UVCCameraDriver();
-
-  void updateConfig(const UVCCameraConfig& config);
 
   void setVideoMode();
 
@@ -123,7 +121,9 @@ class UVCCameraDriver {
  private:
   rclcpp::Node* node_;
   rclcpp::Logger logger_;
+  std::shared_ptr<Parameters> parameters_;
   UVCCameraConfig config_;
+  ImageROI roi_;
   uvc_context_t* ctx_ = nullptr;
   uvc_device_t* device_ = nullptr;
   uvc_device_handle_t* device_handle_ = nullptr;
@@ -148,6 +148,7 @@ class UVCCameraDriver {
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
   std::optional<sensor_msgs::msg::CameraInfo> camera_info_;
   rclcpp::Client<GetCameraInfo>::SharedPtr get_camera_info_cli_;
+  ImageROI color_roi_;
 };
 
 }  // namespace astra_camera

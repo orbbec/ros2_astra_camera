@@ -1,6 +1,5 @@
 /camera/camera2:
   ros__parameters:
-    enable_color: true
     ir_width: 640
     ir_height: 480
     ir_fps: 30

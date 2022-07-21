@@ -79,21 +79,6 @@ void OBCameraNode::stopStreams() {
   }
 }
 
-template <class T>
-void OBCameraNode::setAndGetNodeParameter(
-    T& param, const std::string& param_name, const T& default_value,
-    const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor) {
-  try {
-    param = parameters_
-                ->setParam(param_name, rclcpp::ParameterValue(default_value),
-                           std::function<void(const rclcpp::Parameter&)>(), parameter_descriptor)
-                .get<T>();
-  } catch (const rclcpp::ParameterTypeException& ex) {
-    RCLCPP_ERROR_STREAM(logger_, "Failed to set parameter: " << param_name << ". " << ex.what());
-    throw;
-  }
-}
-
 void OBCameraNode::setupDevices() {
   for (const auto& stream_index : IMAGE_STREAMS) {
     stream_started_[stream_index] = false;
@@ -262,29 +247,40 @@ void OBCameraNode::setupConfig() {
 void OBCameraNode::getParameters() {
   for (const auto& stream_index : IMAGE_STREAMS) {
     std::string param_name = stream_name_[stream_index] + "_width";
-    setAndGetNodeParameter(width_[stream_index], param_name, IMAGE_WIDTH);
+    setAndGetNodeParameter(parameters_, width_[stream_index], param_name, IMAGE_WIDTH);
     param_name = stream_name_[stream_index] + "_height";
-    setAndGetNodeParameter(height_[stream_index], param_name, IMAGE_HEIGHT);
+    setAndGetNodeParameter(parameters_, height_[stream_index], param_name, IMAGE_HEIGHT);
     param_name = stream_name_[stream_index] + "_fps";
-    setAndGetNodeParameter(fps_[stream_index], param_name, IMAGE_FPS);
+    setAndGetNodeParameter(parameters_, fps_[stream_index], param_name, IMAGE_FPS);
     param_name = "enable_" + stream_name_[stream_index];
-    setAndGetNodeParameter(enable_[stream_index], param_name, false);
+    setAndGetNodeParameter(parameters_, enable_[stream_index], param_name, false);
     param_name = stream_name_[stream_index] + "_frame_id";
     std::string default_frame_id = "camera_" + stream_name_[stream_index] + "_frame";
-    setAndGetNodeParameter(frame_id_[stream_index], param_name, default_frame_id);
+    setAndGetNodeParameter(parameters_, frame_id_[stream_index], param_name, default_frame_id);
     std::string default_optical_frame_id =
         "camera_optical_" + stream_name_[stream_index] + "_frame";
     param_name = stream_name_[stream_index] + "_optical_frame_id";
-    setAndGetNodeParameter(optical_frame_id_[stream_index], param_name, default_optical_frame_id);
+    setAndGetNodeParameter(parameters_, optical_frame_id_[stream_index], param_name,
+                           default_optical_frame_id);
   }
   for (const auto& stream_index : IMAGE_STREAMS) {
     depth_aligned_frame_id_[stream_index] = optical_frame_id_[COLOR];
   }
-  setAndGetNodeParameter(publish_tf_, "publish_tf", true);
-  setAndGetNodeParameter(tf_publish_rate_, "tf_publish_rate", 10.0);
-  setAndGetNodeParameter(camera_link_frame_id_, "camera_link_frame_id", DEFAULT_BASE_FRAME_ID);
-  setAndGetNodeParameter(depth_registration_, "depth_registration", false);
-  setAndGetNodeParameter(color_depth_synchronization_, "color_depth_synchronization", false);
+  setAndGetNodeParameter(parameters_, publish_tf_, "publish_tf", true);
+  setAndGetNodeParameter(parameters_, tf_publish_rate_, "tf_publish_rate", 10.0);
+  setAndGetNodeParameter(parameters_, camera_link_frame_id_, "camera_link_frame_id",
+                         DEFAULT_BASE_FRAME_ID);
+  setAndGetNodeParameter(parameters_, depth_registration_, "depth_registration", false);
+  setAndGetNodeParameter(parameters_, color_depth_synchronization_, "color_depth_synchronization",
+                         false);
+  setAndGetNodeParameter(parameters_, color_roi_.x, "color_roi.x", -1);
+  setAndGetNodeParameter(parameters_, color_roi_.y, "color_roi.y", -1);
+  setAndGetNodeParameter(parameters_, color_roi_.width, "color_roi.width", -1);
+  setAndGetNodeParameter(parameters_, color_roi_.height, "color_roi.height", -1);
+  setAndGetNodeParameter(parameters_, depth_roi_.x, "depth_roi.x", -1);
+  setAndGetNodeParameter(parameters_, depth_roi_.y, "depth_roi.y", -1);
+  setAndGetNodeParameter(parameters_, depth_roi_.width, "depth_roi.width", -1);
+  setAndGetNodeParameter(parameters_, depth_roi_.height, "depth_roi.height", -1);
 }
 
 void OBCameraNode::setupTopics() {
