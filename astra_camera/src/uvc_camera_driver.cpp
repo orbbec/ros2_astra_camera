@@ -397,8 +397,8 @@ bool UVCCameraDriver::setUVCExposureCb(const std::shared_ptr<SetInt32::Request>&
     return true;
   }
   uint32_t max_expo, min_expo;
-  uvc_get_exposure_abs(device_handle_, &max_expo, UVC_GET_MIN);
-  uvc_get_exposure_abs(device_handle_, &min_expo, UVC_GET_MAX);
+  uvc_get_exposure_abs(device_handle_, &max_expo, UVC_GET_MAX);
+  uvc_get_exposure_abs(device_handle_, &min_expo, UVC_GET_MIN);
   if (request->data < static_cast<int>(min_expo) || request->data > static_cast<int>(max_expo)) {
     std::stringstream ss;
     ss << "Exposure value out of range. Min: " << min_expo << ", Max: " << max_expo;
