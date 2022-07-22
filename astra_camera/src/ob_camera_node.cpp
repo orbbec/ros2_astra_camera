@@ -196,9 +196,9 @@ void OBCameraNode::startStreams() {
     color_width = stream_video_mode_[COLOR].getResolutionX();
     color_height = stream_video_mode_[COLOR].getResolutionY();
   }
-  setImageRegistrationMode(depth_registration_);
+  setImageRegistrationMode(depth_align_);
   setDepthColorSync(color_depth_synchronization_);
-  if (depth_registration_) {
+  if (depth_align_) {
     setDepthToColorResolution(color_width, color_height);
   }
   for (const auto& stream_index : IMAGE_STREAMS) {
@@ -270,7 +270,7 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(parameters_, tf_publish_rate_, "tf_publish_rate", 10.0);
   setAndGetNodeParameter(parameters_, camera_link_frame_id_, "camera_link_frame_id",
                          DEFAULT_BASE_FRAME_ID);
-  setAndGetNodeParameter(parameters_, depth_registration_, "depth_registration", false);
+  setAndGetNodeParameter(parameters_, depth_align_, "depth_align", false);
   setAndGetNodeParameter(parameters_, color_depth_synchronization_, "color_depth_synchronization",
                          false);
   setAndGetNodeParameter(parameters_, color_roi_.x, "color_roi.x", -1);
@@ -428,7 +428,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   auto timestamp = node_->now();
   image_msg->header.stamp = timestamp;
   image_msg->header.frame_id =
-      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
+      depth_align_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
   image_msg->width = stream_index == DEPTH ? width * depth_scale_ : width;
   image_msg->height = stream_index == DEPTH ? height * depth_scale_ : height;
   image_msg->step = image_msg->width * unit_step_size_[stream_index];
@@ -442,7 +442,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   }
   camera_info->header.stamp = timestamp;
   camera_info->header.frame_id =
-      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
+      depth_align_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
 
   camera_info_publisher->publish(std::move(camera_info));
 }
@@ -460,7 +460,7 @@ void OBCameraNode::setDepthToColorResolution(int width, int height) {
   if (pid != DABAI_DCW_DEPTH_PID && pid != DABAI_DW_PID) {
     return;
   }
-  if (!depth_registration_) {
+  if (!depth_align_) {
     return;
   }
   if (width * 9 == height * 16) {

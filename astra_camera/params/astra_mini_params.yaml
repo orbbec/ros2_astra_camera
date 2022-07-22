@@ -1,19 +1,20 @@
 /**:
   ros__parameters:
-    color_width: 640
-    color_height: 480
+    color_width: 320
+    color_height: 240
     color_fps: 30
     color_frame_id: "camera_color_frame"
     color_optical_frame_id: "camera_optical_color_frame"
     enable_color: true
-    ir_width: 640
-    ir_height: 480
+    ir_width: 320
+    ir_height: 240
     ir_fps: 30
     ir_frame_id: "camera_ir_frame"
     ir_optical_frame_id: "camera_optical_ir_frame"
     enable_ir: false # NOTE: can not enable both IR && COLOR
-    depth_width: 640
-    depth_height: 480
+    depth_width: 320
+    depth_height: 240
+    depth_scale : 1
     depth_fps: 30
     depth_frame_id: "depth_frame"
     depth_optical_frame_id: "camera_optical_ir_frame"
@@ -21,7 +22,7 @@
     publish_tf: true
     tf_publish_rate: 10.0
     reconnect_timeout: 6.0
-    depth_registration: true
+    depth_align: true
     reconnection_delay: 3
     serial_number: ""
     camera_link_frame_id: "camera_link"

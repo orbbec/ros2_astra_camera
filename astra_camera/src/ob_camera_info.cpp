@@ -146,7 +146,7 @@ CameraInfo::UniquePtr OBCameraNode::getIRCameraInfo() {
     camera_info_ptr->k[5] = camera_params.r_intr_p[3];
     camera_info_ptr->k[8] = 1.0;
     // left camera is depth camera, right is rgb camera
-    if (!depth_registration_) {
+    if (!depth_align_) {
       // if depth is not registered, then rgb is registered to depth
       camera_info_ptr->k[0] = camera_params.l_intr_p[0];
       camera_info_ptr->k[2] = camera_params.l_intr_p[2];

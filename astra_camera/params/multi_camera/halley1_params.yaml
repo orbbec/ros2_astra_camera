@@ -15,7 +15,7 @@
     publish_tf: true
     tf_publish_rate: 10.0
     reconnect_timeout: 6.0
-    depth_registration: true
+    depth_align: true
     serial_number: "CH2PB10004T"
     camera_link_frame_id: "camera1_link"
     number_of_devices: 2

@@ -235,7 +235,7 @@ class OBCameraNode {
   std::shared_ptr<std::thread> tf_thread_;
   std::condition_variable tf_cv_;
   double tf_publish_rate_ = 10.0;
-  bool depth_registration_ = false;
+  bool depth_align_ = false;
   std::optional<OBCameraParams> camera_params_;
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;
