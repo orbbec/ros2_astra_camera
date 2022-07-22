@@ -242,6 +242,7 @@ class OBCameraNode {
   bool color_depth_synchronization_ = false;
   ImageROI color_roi_;
   ImageROI depth_roi_;
+  int depth_scale_ = 1;
 };
 
 }  // namespace astra_camera

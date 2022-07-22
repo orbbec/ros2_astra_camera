@@ -281,6 +281,7 @@ void OBCameraNode::getParameters() {
   setAndGetNodeParameter(parameters_, depth_roi_.y, "depth_roi.y", -1);
   setAndGetNodeParameter(parameters_, depth_roi_.width, "depth_roi.width", -1);
   setAndGetNodeParameter(parameters_, depth_roi_.height, "depth_roi.height", -1);
+  setAndGetNodeParameter(parameters_, depth_scale_, "depth_scale", 1);
 }
 
 void OBCameraNode::setupTopics() {
@@ -415,31 +416,35 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   image.data = (uint8_t*)frame.getData();
   auto& camera_info_publisher = camera_info_publishers_.at(stream_index);
   auto& image_publisher = image_publishers_.at(stream_index);
-
-  auto camera_info = getColorCameraInfo();
-  if (camera_info->width != static_cast<uint32_t>(width) ||
-      camera_info->height != static_cast<uint32_t>(height)) {
-    camera_info->width = width;
-    camera_info->height = height;
+  cv::Mat scaled_image;
+  if (stream_index == DEPTH) {
+    cv::resize(image, scaled_image, cv::Size(width * depth_scale_, height * depth_scale_), 0, 0,
+               cv::INTER_NEAREST);
   }
+  auto image_msg = cv_bridge::CvImage(std_msgs::msg::Header(), encoding_.at(stream_index),
+                                      stream_index == DEPTH ? scaled_image : image)
+                       .toImageMsg();
+  CHECK_NOTNULL(image_msg);
   auto timestamp = node_->now();
+  image_msg->header.stamp = timestamp;
+  image_msg->header.frame_id =
+      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
+  image_msg->width = stream_index == DEPTH ? width * depth_scale_ : width;
+  image_msg->height = stream_index == DEPTH ? height * depth_scale_ : height;
+  image_msg->step = image_msg->width * unit_step_size_[stream_index];
+  image_msg->is_bigendian = false;
+  image_publisher.publish(image_msg);
+  auto camera_info = getColorCameraInfo();
+  if (camera_info->width != static_cast<uint32_t>(image_msg->width) ||
+      camera_info->height != static_cast<uint32_t>(image_msg->height)) {
+    camera_info->width = image_msg->width;
+    camera_info->height = image_msg->height;
+  }
   camera_info->header.stamp = timestamp;
   camera_info->header.frame_id =
       depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
 
   camera_info_publisher->publish(std::move(camera_info));
-
-  auto image_msg =
-      cv_bridge::CvImage(std_msgs::msg::Header(), encoding_.at(stream_index), image).toImageMsg();
-  CHECK_NOTNULL(image_msg);
-  image_msg->header.stamp = timestamp;
-  image_msg->header.frame_id =
-      depth_registration_ ? depth_aligned_frame_id_[stream_index] : optical_frame_id_[stream_index];
-  image_msg->width = width;
-  image_msg->height = height;
-  image_msg->step = width * unit_step_size_[stream_index];
-  image_msg->is_bigendian = false;
-  image_publisher.publish(image_msg);
 }
 
 void OBCameraNode::setDepthColorSync(bool data) {
