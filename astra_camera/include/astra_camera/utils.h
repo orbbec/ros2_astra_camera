@@ -48,25 +48,19 @@ bool isValidCameraParams(const OBCameraParams& params);
 
 std::vector<std::string> split(const std::string& str, char delim);
 
-// template <class T>
-// void setAndGetNodeParameter(const std::shared_ptr<Parameters>& parameters, T& param,
-//                             const std::string& param_name, const T& default_value,
-//                             const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor
-//                             =
-//                                 rcl_interfaces::msg::ParameterDescriptor());
-
 template <class T>
-void setAndGetNodeParameter(const std::shared_ptr<Parameters>& parameters, T& param,
-                            const std::string& param_name, const T& default_value,
-                            const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
-                                rcl_interfaces::msg::ParameterDescriptor()) {
+inline void setAndGetNodeParameter(
+    const std::shared_ptr<Parameters>& parameters, T& param, const std::string& param_name,
+    const T& default_value,
+    const rcl_interfaces::msg::ParameterDescriptor& parameter_descriptor =
+        rcl_interfaces::msg::ParameterDescriptor()) {
   try {
     param = parameters
                 ->setParam(param_name, rclcpp::ParameterValue(default_value),
                            std::function<void(const rclcpp::Parameter&)>(), parameter_descriptor)
                 .get<T>();
   } catch (const rclcpp::ParameterTypeException& ex) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("setAndGetNodeParameter"),
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("astra_camera_utils"),
                         "Failed to set parameter: " << param_name << ". " << ex.what());
   }
 }
