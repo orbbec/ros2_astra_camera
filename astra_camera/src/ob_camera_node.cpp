@@ -298,13 +298,15 @@ void OBCameraNode::setupTopics() {
 void OBCameraNode::setupPublishers() {
   static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
   for (const auto& stream_index : IMAGE_STREAMS) {
-    std::string name = stream_name_[stream_index];
-    std::string topic = name + "/image_raw";
-    image_publishers_[stream_index] =
-        image_transport::create_publisher(node_, topic, rmw_qos_profile_sensor_data);
-    topic = name + "/camera_info";
-    camera_info_publishers_[stream_index] =
-        node_->create_publisher<CameraInfo>(topic, rclcpp::QoS{1}.best_effort());
+    if (enable_[stream_index]) {
+      std::string name = stream_name_[stream_index];
+      std::string topic = name + "/image_raw";
+      image_publishers_[stream_index] =
+          image_transport::create_publisher(node_, topic, rmw_qos_profile_sensor_data);
+      topic = name + "/camera_info";
+      camera_info_publishers_[stream_index] =
+          node_->create_publisher<CameraInfo>(topic, rclcpp::QoS{1}.best_effort());
+    }
   }
   extrinsics_publisher_ = node_->create_publisher<Extrinsics>("extrinsic/depth_to_color",
                                                               rclcpp::QoS{1}.transient_local());
@@ -434,7 +436,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   image_msg->step = image_msg->width * unit_step_size_[stream_index];
   image_msg->is_bigendian = false;
   image_publisher.publish(image_msg);
-  auto camera_info = getColorCameraInfo();
+  auto camera_info = stream_index == COLOR ? getColorCameraInfo() : getDepthCameraInfo();
   if (camera_info->width != static_cast<uint32_t>(image_msg->width) ||
       camera_info->height != static_cast<uint32_t>(image_msg->height)) {
     camera_info->width = image_msg->width;
