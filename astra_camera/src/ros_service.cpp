@@ -187,11 +187,14 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
       return false;
     }
     response->data = camera_settings->getGain();
-  } else {
+  } else if (stream_index == INFRA1) {
     int data = 0;
     int data_size = 4;
     device_->getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, &data_size);
     response->data = data;
+  } else {
+    response->message = "stream not support get gain";
+    return false;
   }
   return true;
 }
@@ -209,7 +212,7 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
       return false;
     }
     camera_settings->setGain(request->data);
-  } else {
+  } else if (stream_index == INFRA1) {
     int data = request->data;
     int data_size = 4;
     device_->setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, data_size);
@@ -272,6 +275,9 @@ bool OBCameraNode::setAutoExposureCallback(
     status = camera_settings->setAutoExposureEnabled(request->data);
   } else if (stream_index == INFRA1) {
     status = device_->setProperty(XN_MODULE_PROPERTY_AE, request->data);
+  } else {
+    response->message = "Stream not supported set auto exposure";
+    return false;
   }
 
   if (status != openni::STATUS_OK) {
