@@ -123,9 +123,10 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
   if (depth_msg->header.frame_id != rgb_msg_in->header.frame_id) {
     static auto clock = rclcpp::Clock(RCL_ROS_TIME);
     RCLCPP_WARN_THROTTLE(logger_, clock,
-                         100000,  // 10 seconds
+                         50000,  // 5 seconds
                          "Depth image frame id [%s] doesn't match RGB image frame id [%s]",
                          depth_msg->header.frame_id.c_str(), rgb_msg_in->header.frame_id.c_str());
+    return;
   }
 
   // Update camera model
@@ -169,8 +170,9 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
       rgb_msg = cv_bridge::toCvCopy(cv_rsz.toImageMsg(), enc::RGB8)->toImageMsg();
     }
 
-    RCLCPP_ERROR(logger_, "Depth resolution (%ux%u) does not match RGB resolution (%ux%u)",
-                 depth_msg->width, depth_msg->height, rgb_msg->width, rgb_msg->height);
+    RCLCPP_ERROR_THROTTLE(logger_, *get_clock(), 50000,
+                          "Depth resolution (%ux%u) does not match RGB resolution (%ux%u)",
+                          depth_msg->width, depth_msg->height, rgb_msg->width, rgb_msg->height);
     return;
   } else {
     rgb_msg = rgb_msg_in;
