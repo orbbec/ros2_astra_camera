@@ -127,8 +127,8 @@ void OBCameraNode::setupCameraCtrlServices() {
         response->success = getDeviceInfoCallback(request, response);
       });
   get_sdk_version_srv_ = node_->create_service<GetString>(
-      "get_sdk_version", [](const std::shared_ptr<GetString::Request> request,
-                            std::shared_ptr<GetString::Response> response) {
+      "get_sdk_version", [this](const std::shared_ptr<GetString::Request> request,
+                                std::shared_ptr<GetString::Response> response) {
         response->success = getSDKVersion(request, response);
       });
   get_camera_info_srv_ = node_->create_service<GetCameraInfo>(
@@ -383,6 +383,10 @@ bool OBCameraNode::getSDKVersion(const std::shared_ptr<GetString::Request>& requ
   nlohmann::json data;
   data["ros_sdk_version"] = OB_ROS_VERSION_STR;
   data["openni_version"] = ONI_VERSION_STRING;
+  char buffer[128] = {0};
+  int data_size = sizeof(buffer);
+  device_->getProperty(XN_MODULE_PROPERTY_SENSOR_PLATFORM_STRING, buffer, &data_size);
+  data["firmware_version"] = buffer;
   response->data = data.dump(2);
   return true;
 }

@@ -143,8 +143,8 @@ class OBCameraNode {
   bool getCameraInfoCallback(const std::shared_ptr<GetCameraInfo::Request>& request,
                              std::shared_ptr<GetCameraInfo::Response>& response);
 
-  static bool getSDKVersion(const std::shared_ptr<GetString::Request>& request,
-                            std::shared_ptr<GetString::Response>& response);
+  bool getSDKVersion(const std::shared_ptr<GetString::Request>& request,
+                     std::shared_ptr<GetString::Response>& response);
 
   bool toggleSensorCallback(const std::shared_ptr<SetBool::Request>& request,
                             std::shared_ptr<SetBool::Response>& response,
