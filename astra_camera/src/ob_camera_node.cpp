@@ -296,7 +296,6 @@ void OBCameraNode::setupTopics() {
 }
 
 void OBCameraNode::setupPublishers() {
-  static_tf_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(node_);
   for (const auto& stream_index : IMAGE_STREAMS) {
     if (enable_[stream_index]) {
       std::string name = stream_name_[stream_index];
