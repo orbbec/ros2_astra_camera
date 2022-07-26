@@ -328,16 +328,26 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
                                        std::shared_ptr<GetInt32 ::Response>& response,
                                        const stream_index_pair& stream_index) {
   (void)request;
-  auto stream = streams_.at(stream_index);
-  auto camera_settings = stream->getCameraSettings();
-  if (camera_settings == nullptr) {
-    response->data = 0;
-    response->success = false;
-    response->message = stream_name_[stream_index] + " Camera settings not available";
+  if (stream_index == COLOR || stream_index == DEPTH) {
+    auto stream = streams_.at(stream_index);
+    auto camera_settings = stream->getCameraSettings();
+    if (camera_settings == nullptr) {
+      response->success = false;
+      response->message = stream_name_[stream_index] + " Camera settings not available";
+      RCLCPP_ERROR_STREAM(logger_, response->message);
+      return false;
+    }
+    response->data = camera_settings->getExposure();
+  } else if (stream_index == INFRA1) {
+    int data = 0;
+    int data_size = 4;
+    device_->getProperty(openni::OBEXTENSION_ID_IR_EXP, (uint32_t*)&data, &data_size);
+    response->data = data;
+    return true;
+  } else {
+    response->message = "Stream not supported get exposure";
     return false;
   }
-  response->data = camera_settings->getExposure();
-  return true;
 }
 
 bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,

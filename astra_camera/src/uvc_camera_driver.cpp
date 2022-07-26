@@ -210,59 +210,59 @@ void UVCCameraDriver::setupCameraControlService() {
   get_uvc_exposure_srv_ = node_->create_service<GetInt32>(
       "get_uvc_exposure", [this](const std::shared_ptr<GetInt32::Request> request,
                                  std::shared_ptr<GetInt32::Response> response) {
-        return getUVCExposureCb(request, response);
+        response->success = getUVCExposureCb(request, response);
       });
   set_uvc_exposure_srv_ = node_->create_service<SetInt32>(
       "set_uvc_exposure", [this](const std::shared_ptr<SetInt32::Request> request,
                                  std::shared_ptr<SetInt32::Response> response) {
-        return setUVCExposureCb(request, response);
+        response->success = setUVCExposureCb(request, response);
       });
   get_uvc_gain_srv_ = node_->create_service<GetInt32>(
       "get_uvc_gain", [this](const std::shared_ptr<GetInt32::Request> request,
                              std::shared_ptr<GetInt32::Response> response) {
-        return getUVCGainCb(request, response);
+        response->success = getUVCGainCb(request, response);
       });
   set_uvc_gain_srv_ = node_->create_service<SetInt32>(
       "set_uvc_gain", [this](const std::shared_ptr<SetInt32::Request> request,
                              std::shared_ptr<SetInt32::Response> response) {
-        return setUVCGainCb(request, response);
+        response->success = setUVCGainCb(request, response);
       });
   get_uvc_white_balance_srv_ = node_->create_service<GetInt32>(
       "get_uvc_white_balance", [this](const std::shared_ptr<GetInt32::Request> request,
                                       std::shared_ptr<GetInt32::Response> response) {
-        return getUVCWhiteBalanceCb(request, response);
+        response->success = getUVCWhiteBalanceCb(request, response);
       });
   set_uvc_white_balance_srv_ = node_->create_service<SetInt32>(
       "set_uvc_white_balance", [this](const std::shared_ptr<SetInt32::Request> request,
                                       std::shared_ptr<SetInt32::Response> response) {
-        return setUVCWhiteBalanceCb(request, response);
+        response->success = setUVCWhiteBalanceCb(request, response);
       });
   set_uvc_auto_exposure_srv_ = node_->create_service<SetBool>(
       "set_uvc_auto_exposure", [this](const std::shared_ptr<SetBool::Request> request,
                                       std::shared_ptr<SetBool::Response> response) {
-        return setUVCAutoExposureCb(request, response);
+        response->success = setUVCAutoExposureCb(request, response);
       });
   set_uvc_auto_white_balance_srv_ = node_->create_service<SetBool>(
       "set_uvc_auto_white_balance", [this](const std::shared_ptr<SetBool::Request> request,
                                            std::shared_ptr<SetBool::Response> response) {
-        return setUVCAutoWhiteBalanceCb(request, response);
+        response->success = setUVCAutoWhiteBalanceCb(request, response);
       });
 
   get_uvc_mirror_srv_ = node_->create_service<GetInt32>(
       "get_uvc_mirror", [this](const std::shared_ptr<GetInt32::Request> request,
                                std::shared_ptr<GetInt32::Response> response) {
-        return getUVCMirrorCb(request, response);
+        response->success = getUVCMirrorCb(request, response);
       });
   set_uvc_mirror_srv_ = node_->create_service<SetBool>(
       "set_uvc_mirror", [this](const std::shared_ptr<SetBool::Request> request,
                                std::shared_ptr<SetBool::Response> response) {
-        return setUVCMirrorCb(request, response);
+        response->success = setUVCMirrorCb(request, response);
       });
 
   toggle_uvc_camera_srv_ = node_->create_service<SetBool>(
       "toggle_uvc_camera", [this](const std::shared_ptr<SetBool::Request> request,
                                   std::shared_ptr<SetBool::Response> response) {
-        return toggleUVCCamera(request, response);
+        response->success = toggleUVCCamera(request, response);
       });
   get_camera_info_cli_ = node_->create_client<GetCameraInfo>("get_camera_info");
 }
