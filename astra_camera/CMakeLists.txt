@@ -116,6 +116,30 @@ target_link_libraries(${PROJECT_NAME}
   -L${ORBBEC_OPENNI2_REDIST}
   )
 
+add_executable(list_devices_node
+  src/list_devices_node.cpp
+  )
+target_include_directories(list_devices_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${OpenCV_INCLUDED_DIRS}
+  )
+
+ament_target_dependencies(list_devices_node
+  ${dependencies}
+  )
+target_link_libraries(list_devices_node
+  ${OpenCV_LIBS}
+  Eigen3::Eigen
+  glog::glog
+  magic_enum::magic_enum
+  LibUVC::UVCShared
+  -lOpenNI2
+  -L${ORBBEC_OPENNI2_REDIST}
+  ${PROJECT_NAME}
+  )
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE "COMPOSITION_BUILDING_DLL")
 
 rclcpp_components_register_nodes(${PROJECT_NAME}
@@ -135,6 +159,10 @@ install(FILES openni2_redist/${HOST_PLATFORM}/libOpenNI2.so
 
 install(DIRECTORY openni2_redist/${HOST_PLATFORM}/OpenNI2
   DESTINATION lib/
+  )
+
+install(TARGETS list_devices_node
+  DESTINATION lib/${PROJECT_NAME}/
   )
 
 install(
