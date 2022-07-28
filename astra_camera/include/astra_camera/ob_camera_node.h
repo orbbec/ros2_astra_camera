@@ -183,6 +183,7 @@ class OBCameraNode {
   rclcpp::Logger logger_;
   bool use_uvc_camera_ = false;
   openni::DeviceInfo device_info_;
+  std::string camera_name_ = "camera";
   std::atomic_bool is_running_{false};
   std::map<stream_index_pair, bool> enable_;
   std::map<stream_index_pair, bool> stream_started_;

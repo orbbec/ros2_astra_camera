@@ -4,17 +4,18 @@ from ament_index_python import get_package_share_directory
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import yaml
+from launch_ros.actions import Node
+
 
 
 def generate_container_node(camera_suffix, params_file):
     with open(params_file, 'r') as file:
-        config_params = yaml.safe_load(file)['/camera/camera' + camera_suffix]['ros__parameters']
+        config_params = yaml.safe_load(file)
     container = ComposableNodeContainer(
         name='astra_camera_container',
         namespace='camera' + camera_suffix,
         package='rclcpp_components',
         executable='component_container',
-        prefix=["xterm -e gdb -ex run --args"],
         composable_node_descriptions=[
             ComposableNode(
                 package='astra_camera',
@@ -40,8 +41,8 @@ def generate_container_node(camera_suffix, params_file):
 
 
 def generate_launch_description():
-    params1_file = get_package_share_directory("astra_camera") + "/params/multi_camera/halley1_params.yaml"
-    params2_file = get_package_share_directory("astra_camera") + "/params/multi_camera/halley2_params.yaml"
+    params1_file = get_package_share_directory("astra_camera") + "/params/multi_camera/camera1_params.yaml"
+    params2_file = get_package_share_directory("astra_camera") + "/params/multi_camera/camera2_params.yaml"
     camera_suffix1 = '1'
     camera_suffix2 = '2'
     container1 = generate_container_node(camera_suffix1, params1_file)
@@ -59,4 +60,14 @@ def generate_launch_description():
                                                 "camera1_link",
                                                 "camera2_link",
                                             ], )
-    return LaunchDescription([container1, container2, dummy_tf_node])
+
+    rviz_config_dir = get_package_share_directory("astra_camera") + "/rviz/mutli_camera.rviz"
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output = 'screen',
+        arguments=['-d', rviz_config_dir],
+        parameters=[{'use_sim_time': False}]
+        )
+    return LaunchDescription([container1, container2, dummy_tf_node, rviz_node])

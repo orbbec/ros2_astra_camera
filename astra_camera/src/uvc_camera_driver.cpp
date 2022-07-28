@@ -56,19 +56,18 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters>
   config_.serial_number = serial_number;
   setAndGetNodeParameter(parameters_, config_.vendor_id, "uvc_camera.vid", 0);
   setAndGetNodeParameter(parameters_, config_.product_id, "uvc_camera.pid", 0);
-  setAndGetNodeParameter(parameters_, config_.width, "uvc_camera.width", 640);
-  setAndGetNodeParameter(parameters_, config_.height, "uvc_camera.height", 480);
-  setAndGetNodeParameter(parameters_, config_.fps, "uvc_camera.fps", 30);
+  setAndGetNodeParameter(parameters_, config_.width, "color_width", 640);
+  setAndGetNodeParameter(parameters_, config_.height, "color_height", 480);
+  setAndGetNodeParameter(parameters_, config_.fps, "color_fps", 30);
   setAndGetNodeParameter<std::string>(parameters_, config_.format, "uvc_camera.format", "mjpeg");
-  setAndGetNodeParameter<std::string>(parameters_, config_.frame_id, "uvc_camera.frame_id",
-                                      "camera_color_frame");
-  setAndGetNodeParameter<std::string>(parameters_, config_.optical_frame_id,
-                                      "uvc_camera.optical_frame_id", "camera_optical_color_frame");
   setAndGetNodeParameter(parameters_, config_.retry_count, "uvc_camera.retry_count", 500);
   setAndGetNodeParameter(parameters_, roi_.x, "color_roi.x", -1);
   setAndGetNodeParameter(parameters_, roi_.y, "color_roi.y", -1);
   setAndGetNodeParameter(parameters_, roi_.width, "color_roi.width", -1);
   setAndGetNodeParameter(parameters_, roi_.height, "color_roi.height", -1);
+  setAndGetNodeParameter(parameters_, camera_name_, "camera_name", camera_name_);
+  config_.frame_id = camera_name_ + "_color_frame";
+  config_.optical_frame_id = camera_name_ + "_color_optical_frame";
   setupCameraControlService();
   image_publisher_ =
       image_transport::create_publisher(node_, "color/image_raw", rmw_qos_profile_sensor_data);

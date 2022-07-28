@@ -245,6 +245,13 @@ void OBCameraNode::setupConfig() {
 }
 
 void OBCameraNode::getParameters() {
+  setAndGetNodeParameter(parameters_, camera_name_, "camera_name", camera_name_);
+  camera_link_frame_id_ = camera_name_ + "_link";
+  for (const auto& stream_index : IMAGE_STREAMS) {
+    frame_id_[stream_index] = camera_name_ + "_" + stream_name_[stream_index] + "_frame";
+    optical_frame_id_[stream_index] =
+        camera_name_ + "_" + stream_name_[stream_index] + "_optical_frame";
+  }
   for (const auto& stream_index : IMAGE_STREAMS) {
     std::string param_name = stream_name_[stream_index] + "_width";
     setAndGetNodeParameter(parameters_, width_[stream_index], param_name, IMAGE_WIDTH);
@@ -254,14 +261,6 @@ void OBCameraNode::getParameters() {
     setAndGetNodeParameter(parameters_, fps_[stream_index], param_name, IMAGE_FPS);
     param_name = "enable_" + stream_name_[stream_index];
     setAndGetNodeParameter(parameters_, enable_[stream_index], param_name, false);
-    param_name = stream_name_[stream_index] + "_frame_id";
-    std::string default_frame_id = "camera_" + stream_name_[stream_index] + "_frame";
-    setAndGetNodeParameter(parameters_, frame_id_[stream_index], param_name, default_frame_id);
-    std::string default_optical_frame_id =
-        "camera_optical_" + stream_name_[stream_index] + "_frame";
-    param_name = stream_name_[stream_index] + "_optical_frame_id";
-    setAndGetNodeParameter(parameters_, optical_frame_id_[stream_index], param_name,
-                           default_optical_frame_id);
   }
   for (const auto& stream_index : IMAGE_STREAMS) {
     depth_aligned_frame_id_[stream_index] = optical_frame_id_[COLOR];

@@ -49,7 +49,8 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config);
 
 class UVCCameraDriver {
  public:
-  explicit UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters> parameters, const std::string& serial_number);
+  explicit UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters> parameters,
+                           const std::string& serial_number);
 
   ~UVCCameraDriver();
 
@@ -124,6 +125,7 @@ class UVCCameraDriver {
   std::shared_ptr<Parameters> parameters_;
   UVCCameraConfig config_;
   ImageROI roi_;
+  std::string camera_name_ = "camera";
   uvc_context_t* ctx_ = nullptr;
   uvc_device_t* device_ = nullptr;
   uvc_device_handle_t* device_handle_ = nullptr;
