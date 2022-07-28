@@ -11,8 +11,8 @@ ir_height: 400
 ir_fps: 30
 enable_ir: true
 # 深度 相机宽/高/帧率 | depth camera width/height/FPS
-depth_width: 640
-depth_height: 400
+depth_width: 320
+depth_height: 200
 depth_fps: 30
 enable_depth: true
 
@@ -22,7 +22,7 @@ depth_align: false
 serial_number: ""
 number_of_devices: 1
 # UVC 相机，目前只有 dabai, dabi DCW 需要 | UVC camera , only for dabai , dabai DCW serial
-uvc_camera.enable: true
+uvc_camera.enable: false
 uvc_camera.format: "mjpeg"
 uvc_camera.vid: 0x2bc5
 uvc_camera.pid: 0x050e

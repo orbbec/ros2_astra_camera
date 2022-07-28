@@ -50,8 +50,6 @@ def generate_launch_description():
     serial_number2 = "CH15120003D"
     params1 = duplicate_params(default_params, "1", serial_number1)
     params2 = duplicate_params(default_params, "2", serial_number2)
-    print("params1 %s" % params1)
-    print("params2 %s" % params2)
     container1 = generate_container_node("camera1", params1)
     container2 = generate_container_node("camera2", params2)
     # dummy static transformation from camera1 to camera2
