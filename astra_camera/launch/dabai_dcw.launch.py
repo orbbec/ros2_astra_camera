@@ -36,13 +36,4 @@ def generate_launch_description():
         ],
         output='screen'
     )
-    rviz_config_dir = get_package_share_directory("astra_camera") + "/rviz/pointcloud.rviz"
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output = 'screen',
-        arguments=['-d', rviz_config_dir],
-        parameters=[{'use_sim_time': False}]
-        )
-    return LaunchDescription([container , rviz_node])
+    return LaunchDescription([container])

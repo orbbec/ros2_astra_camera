@@ -1,5 +1,4 @@
 import sys
-from traitlets import default
 from launch import LaunchDescription
 import launch_ros.actions
 from ament_index_python import get_package_share_directory
@@ -71,15 +70,5 @@ def generate_launch_description():
             "camera2_link",
         ],
     )
-    rviz_config_dir = get_package_share_directory(
-        "astra_camera") + '/rviz/multi_camera.rviz'
-    rviz_node = Node(package='rviz2',
-                     executable='rviz2',
-                     name='rviz2',
-                     output='screen',
-                     arguments=['-d', rviz_config_dir],
-                     parameters=[{
-                         'use_sim_time': False
-                     }])
     return LaunchDescription(
-        [container1, container2, dummy_tf_node, rviz_node])
+        [container1, container2, dummy_tf_node])
