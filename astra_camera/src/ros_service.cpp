@@ -200,7 +200,7 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
   return true;
 }
 
-bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& request,
+bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32::Request>& request,
                                    std::shared_ptr<SetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
   (void)response;
