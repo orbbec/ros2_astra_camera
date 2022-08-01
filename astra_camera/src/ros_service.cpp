@@ -141,7 +141,7 @@ void OBCameraNode::setupCameraCtrlServices() {
 bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>& request,
                                        std::shared_ptr<SetInt32::Response>& response,
                                        const stream_index_pair& stream_index) {
-  if (stream_index == COLOR || stream_index == DEPTH) {
+  if (stream_index == COLOR) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
@@ -159,7 +159,7 @@ bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>&
     } else {
       return true;
     }
-  } else {
+  } else if (stream_index == INFRA1 || stream_index == INFRA2 || stream_index == DEPTH) {
     auto data = static_cast<uint32_t>(request->data);
     auto rc = device_->setProperty(openni::OBEXTENSION_ID_IR_EXP, data);
     if (rc != openni::STATUS_OK) {
@@ -172,13 +172,14 @@ bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>&
       return true;
     }
   }
+  return false;
 }
 
 bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& request,
                                    std::shared_ptr<GetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
   (void)request;
-  if (stream_index == COLOR || stream_index == DEPTH) {
+  if (stream_index == COLOR) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
@@ -187,7 +188,7 @@ bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& req
       return false;
     }
     response->data = camera_settings->getGain();
-  } else if (stream_index == INFRA1) {
+  } else if (stream_index == INFRA1 || stream_index == INFRA2 || stream_index == DEPTH) {
     int data = 0;
     int data_size = 4;
     device_->getProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, &data_size);
@@ -203,7 +204,7 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
                                    std::shared_ptr<SetInt32::Response>& response,
                                    const stream_index_pair& stream_index) {
   (void)response;
-  if (stream_index == COLOR || stream_index == DEPTH) {
+  if (stream_index == COLOR) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
@@ -212,7 +213,7 @@ bool OBCameraNode::setGainCallback(const std::shared_ptr<SetInt32 ::Request>& re
       return false;
     }
     camera_settings->setGain(request->data);
-  } else if (stream_index == INFRA1) {
+  } else if (stream_index == INFRA1 || stream_index == INFRA2 || stream_index == DEPTH) {
     int data = request->data;
     int data_size = 4;
     device_->setProperty(openni::OBEXTENSION_ID_IR_GAIN, (uint8_t*)&data, data_size);
@@ -263,7 +264,7 @@ bool OBCameraNode::setAutoExposureCallback(
     std::shared_ptr<std_srvs::srv::SetBool::Response>& response,
     const stream_index_pair& stream_index) {
   openni::Status status;
-  if (stream_index == COLOR || stream_index == DEPTH) {
+  if (stream_index == COLOR) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
@@ -273,7 +274,7 @@ bool OBCameraNode::setAutoExposureCallback(
       return false;
     }
     status = camera_settings->setAutoExposureEnabled(request->data);
-  } else if (stream_index == INFRA1) {
+  } else if (stream_index == INFRA1 || stream_index == INFRA2 || stream_index == DEPTH) {
     status = device_->setProperty(XN_MODULE_PROPERTY_AE, request->data);
   } else {
     response->message = "Stream not supported set auto exposure";
@@ -328,7 +329,7 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
                                        std::shared_ptr<GetInt32 ::Response>& response,
                                        const stream_index_pair& stream_index) {
   (void)request;
-  if (stream_index == COLOR || stream_index == DEPTH) {
+  if (stream_index == COLOR) {
     auto stream = streams_.at(stream_index);
     auto camera_settings = stream->getCameraSettings();
     if (camera_settings == nullptr) {
@@ -338,7 +339,7 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
       return false;
     }
     response->data = camera_settings->getExposure();
-  } else if (stream_index == INFRA1) {
+  } else if (stream_index == INFRA1 || stream_index == INFRA2 || stream_index == DEPTH) {
     int data = 0;
     int data_size = 4;
     device_->getProperty(openni::OBEXTENSION_ID_IR_EXP, (uint32_t*)&data, &data_size);
