@@ -146,6 +146,10 @@ class OBCameraNode {
   bool getSDKVersion(const std::shared_ptr<GetString::Request>& request,
                      std::shared_ptr<GetString::Response>& response);
 
+  bool getCameraParamsCallback(const std::shared_ptr<GetCameraParams::Request>& request,
+                               std::shared_ptr<GetCameraParams::Response>& response);
+
+
   bool toggleSensorCallback(const std::shared_ptr<SetBool::Request>& request,
                             std::shared_ptr<SetBool::Response>& response,
                             const stream_index_pair& stream_index);
@@ -220,6 +224,7 @@ class OBCameraNode {
   std::map<stream_index_pair, rclcpp::Service<SetBool>::SharedPtr> set_white_balance_srv_;
   std::map<stream_index_pair, rclcpp::Service<GetString>::SharedPtr> get_supported_video_modes_srv_;
   rclcpp::Service<GetString>::SharedPtr get_sdk_version_srv_;
+  rclcpp::Service<GetCameraParams>::SharedPtr get_camera_params_srv_;
   std::map<stream_index_pair, rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr>
       set_auto_exposure_srv_;
   rclcpp::Service<GetDeviceInfo>::SharedPtr get_device_srv_;

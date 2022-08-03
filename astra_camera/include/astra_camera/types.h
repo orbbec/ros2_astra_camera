@@ -26,6 +26,7 @@
 #include "astra_camera_msgs/srv/get_int32.hpp"
 #include "astra_camera_msgs/srv/get_string.hpp"
 #include "astra_camera_msgs/srv/get_camera_info.hpp"
+#include "astra_camera_msgs/srv/get_camera_params.hpp"
 
 namespace astra_camera {
 
@@ -38,6 +39,7 @@ using GetString = astra_camera_msgs::srv::GetString;
 using SetBool = std_srvs::srv::SetBool;
 using CameraInfo = sensor_msgs::msg::CameraInfo;
 using GetCameraInfo = astra_camera_msgs::srv::GetCameraInfo;
+using GetCameraParams = astra_camera_msgs::srv::GetCameraParams;
 
 using stream_index_pair = std::pair<openni::SensorType, int>;
 

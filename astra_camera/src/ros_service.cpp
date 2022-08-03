@@ -131,6 +131,11 @@ void OBCameraNode::setupCameraCtrlServices() {
                                 std::shared_ptr<GetString::Response> response) {
         response->success = getSDKVersion(request, response);
       });
+  get_camera_params_srv_ = node_->create_service<GetCameraParams>(
+      "get_camera_params", [this](const std::shared_ptr<GetCameraParams::Request> request,
+                                  std::shared_ptr<GetCameraParams::Response> response) {
+        response->success = getCameraParamsCallback(request, response);
+      });
   get_camera_info_srv_ = node_->create_service<GetCameraInfo>(
       "get_camera_info", [this](const std::shared_ptr<GetCameraInfo::Request> request,
                                 std::shared_ptr<GetCameraInfo::Response> response) {
@@ -349,6 +354,7 @@ bool OBCameraNode::getExposureCallback(const std::shared_ptr<GetInt32::Request>&
     response->message = "Stream not supported get exposure";
     return false;
   }
+  return true;
 }
 
 bool OBCameraNode::getDeviceInfoCallback(const std::shared_ptr<GetDeviceInfo::Request>& request,
@@ -389,6 +395,27 @@ bool OBCameraNode::getSDKVersion(const std::shared_ptr<GetString::Request>& requ
   device_->getProperty(XN_MODULE_PROPERTY_SENSOR_PLATFORM_STRING, buffer, &data_size);
   data["firmware_version"] = buffer;
   response->data = data.dump(2);
+  return true;
+}
+
+bool OBCameraNode::getCameraParamsCallback(const std::shared_ptr<GetCameraParams::Request>& request,
+                                           std::shared_ptr<GetCameraParams::Response>& response) {
+  (void)request;
+  auto camera_params = getCameraParams();
+  for (int i = 0; i < 9; i++) {
+    response->r2l_r[i] = camera_params.r2l_r[i];
+    if (i < 4) {
+      response->l_intr_p[i] = camera_params.l_intr_p[i];
+      response->r_intr_p[i] = camera_params.r_intr_p[i];
+    }
+    if (i < 3) {
+      response->r2l_t[i] = camera_params.r2l_t[i];
+    }
+    if (i < 5) {
+      response->l_k[i] = camera_params.l_k[i];
+      response->r_k[i] = camera_params.r_k[i];
+    }
+  }
   return true;
 }
 

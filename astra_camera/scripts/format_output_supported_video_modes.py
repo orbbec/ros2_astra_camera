@@ -1,5 +1,3 @@
-import imp
-
 import rclpy
 from astra_camera_msgs.srv import GetString
 from rclpy.node import Node
