@@ -316,10 +316,17 @@ bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetBool::Request>&
                                         std::shared_ptr<SetBool::Response>& response) {
   (void)response;
   stopStreams();
-  device_->setProperty(XN_MODULE_PROPERTY_LDP_ENABLE, request->data);
-  device_->setProperty(openni::OBEXTENSION_ID_LDP_EN, request->data);
+  auto status = device_->setProperty(XN_MODULE_PROPERTY_LDP_ENABLE, request->data);
   startStreams();
-  return true;
+  if (status != openni::STATUS_OK) {
+    std::stringstream ss;
+    ss << "Couldn't set LDP enable: " << openni::OpenNI::getExtendedError();
+    RCLCPP_ERROR_STREAM(logger_, ss.str());
+    response->message = ss.str();
+    return false;
+  } else {
+    return true;
+  }
 }
 
 bool OBCameraNode::setMirrorCallback(const std::shared_ptr<SetBool::Request>& request,
