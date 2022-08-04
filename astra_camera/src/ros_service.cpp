@@ -316,6 +316,7 @@ bool OBCameraNode::setLdpEnableCallback(const std::shared_ptr<SetBool::Request>&
                                         std::shared_ptr<SetBool::Response>& response) {
   (void)response;
   stopStreams();
+  device_->setProperty(XN_MODULE_PROPERTY_LDP_ENABLE, request->data);
   device_->setProperty(openni::OBEXTENSION_ID_LDP_EN, request->data);
   startStreams();
   return true;
