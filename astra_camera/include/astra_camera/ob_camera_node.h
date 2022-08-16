@@ -186,7 +186,7 @@ class OBCameraNode {
   std::shared_ptr<UVCCameraDriver> uvc_camera_driver_ = nullptr;
   rclcpp::Logger logger_;
   bool use_uvc_camera_ = false;
-  openni::DeviceInfo device_info_;
+  openni::DeviceInfo device_info_{};
   std::string camera_name_ = "camera";
   std::atomic_bool is_running_{false};
   std::map<stream_index_pair, bool> enable_;

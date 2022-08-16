@@ -186,8 +186,8 @@ void OBCameraNode::setupVideoMode() {
 
 void OBCameraNode::startStreams() {
   setupVideoMode();
-  int color_width = 0;
-  int color_height = 0;
+  int color_width;
+  int color_height;
   if (use_uvc_camera_) {
     CHECK_NOTNULL(uvc_camera_driver_);
     color_width = uvc_camera_driver_->getResolutionX();
