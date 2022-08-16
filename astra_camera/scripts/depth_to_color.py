@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-from platform import node
 import message_filters
 from sensor_msgs.msg import Image
 import cv2
