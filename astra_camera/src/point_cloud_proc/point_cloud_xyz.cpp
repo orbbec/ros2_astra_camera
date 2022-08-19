@@ -52,7 +52,7 @@ PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions &options)
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement when SubscriberStatusCallback is available
-  pub_point_cloud_ = create_publisher<PointCloud2>("depth/points", rclcpp::SensorDataQoS());
+  pub_point_cloud_ = create_publisher<PointCloud2>("depth/points", rclcpp::QoS{1});
 }
 
 template <typename T>

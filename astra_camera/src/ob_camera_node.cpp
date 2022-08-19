@@ -300,10 +300,10 @@ void OBCameraNode::setupPublishers() {
       std::string name = stream_name_[stream_index];
       std::string topic = name + "/image_raw";
       image_publishers_[stream_index] =
-          image_transport::create_publisher(node_, topic, rmw_qos_profile_sensor_data);
+          node_->create_publisher<sensor_msgs::msg::Image>(topic, rclcpp::QoS{1});
       topic = name + "/camera_info";
       camera_info_publishers_[stream_index] =
-          node_->create_publisher<CameraInfo>(topic, rclcpp::QoS{1}.best_effort());
+          node_->create_publisher<CameraInfo>(topic, rclcpp::QoS{1});
     }
   }
   extrinsics_publisher_ = node_->create_publisher<Extrinsics>("extrinsic/depth_to_color",
@@ -433,7 +433,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   image_msg->height = stream_index == DEPTH ? height * depth_scale_ : height;
   image_msg->step = image_msg->width * unit_step_size_[stream_index];
   image_msg->is_bigendian = false;
-  image_publisher.publish(image_msg);
+  image_publisher->publish(*image_msg);
   auto camera_info = stream_index == COLOR ? getColorCameraInfo() : getDepthCameraInfo();
   if (camera_info->width != static_cast<uint32_t>(image_msg->width) ||
       camera_info->height != static_cast<uint32_t>(image_msg->height)) {

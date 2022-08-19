@@ -146,7 +146,7 @@ class UVCCameraDriver {
   rclcpp::Service<SetBool>::SharedPtr set_uvc_mirror_srv_;
   rclcpp::Service<SetBool>::SharedPtr toggle_uvc_camera_srv_;
 
-  image_transport::Publisher image_publisher_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
   std::optional<sensor_msgs::msg::CameraInfo> camera_info_;
   rclcpp::Client<GetCameraInfo>::SharedPtr get_camera_info_cli_;

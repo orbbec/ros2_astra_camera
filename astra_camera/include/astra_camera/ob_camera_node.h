@@ -210,7 +210,7 @@ class OBCameraNode {
   std::map<stream_index_pair, std::shared_ptr<OBFrameListener>> stream_frame_listener_;
   std::map<stream_index_pair, FrameCallbackFunction> stream_frame_callback_;
   std::map<stream_index_pair, int> unit_step_size_;
-  std::map<stream_index_pair, image_transport::Publisher> image_publishers_;
+  std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> image_publishers_;
   std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>
       camera_info_publishers_;
 

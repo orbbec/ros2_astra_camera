@@ -70,9 +70,9 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters>
   config_.optical_frame_id = camera_name_ + "_color_optical_frame";
   setupCameraControlService();
   image_publisher_ =
-      image_transport::create_publisher(node_, "color/image_raw", rmw_qos_profile_sensor_data);
-  camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
-      "color/camera_info", rclcpp::QoS{1}.best_effort());
+      node_->create_publisher<sensor_msgs::msg::Image>("color/image_raw", rclcpp::QoS{1});
+  camera_info_publisher_ =
+      node_->create_publisher<sensor_msgs::msg::CameraInfo>("color/camera_info", rclcpp::QoS{1});
   openCamera();
 }
 
@@ -370,7 +370,7 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     camera_info_->width = image.width;
     camera_info_publisher_->publish(*camera_info_);
   }
-  image_publisher_.publish(image);
+  image_publisher_->publish(image);
 }
 
 void UVCCameraDriver::frameCallbackWrapper(uvc_frame_t* frame, void* ptr) {

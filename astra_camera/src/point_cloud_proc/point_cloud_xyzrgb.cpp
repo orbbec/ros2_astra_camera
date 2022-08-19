@@ -76,7 +76,7 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions& options)
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
-  pub_point_cloud_ = create_publisher<PointCloud2>("depth/color/points", rclcpp::SensorDataQoS());
+  pub_point_cloud_ = create_publisher<PointCloud2>("depth/color/points", rclcpp::QoS{1});
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
 }
 
@@ -108,12 +108,12 @@ void PointCloudXyzrgbNode::connectCb() {
 
   // depth image can use different transport.(e.g. compressedDepth)
   sub_depth_.subscribe(this, "depth/image_raw", depth_hints.getTransport(),
-                       rmw_qos_profile_sensor_data);
+                       rmw_qos_profile_default);
 
   // rgb uses normal ros transport hints.
   image_transport::TransportHints hints(this, "raw");
-  sub_rgb_.subscribe(this, "color/image_raw", hints.getTransport(), rmw_qos_profile_sensor_data);
-  sub_info_.subscribe(this, "color/camera_info", rmw_qos_profile_sensor_data);
+  sub_rgb_.subscribe(this, "color/image_raw", hints.getTransport(), rmw_qos_profile_default);
+  sub_info_.subscribe(this, "color/camera_info", rmw_qos_profile_default);
 }
 
 void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
