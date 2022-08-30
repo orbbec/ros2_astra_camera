@@ -599,7 +599,7 @@ int UVCCameraDriver::UVCGetControl(int control, int unit, int len, uvc_req_code 
                  uvc_strerror(err));
     return -1;
   }
-  return DW_TO_INT(data);
+  return SW_TO_SHORT(data);
 }
 
 int UVCCameraDriver::getResolutionX() const { return config_.width; }
