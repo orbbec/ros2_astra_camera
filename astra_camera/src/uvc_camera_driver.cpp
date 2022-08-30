@@ -497,8 +497,8 @@ bool UVCCameraDriver::setUVCWhiteBalanceCb(const std::shared_ptr<SetInt32::Reque
   INT_TO_DW(request->data, data);
   int unit = uvc_get_processing_units(device_handle_)->bUnitID;
   int control = UVC_PU_WHITE_BALANCE_TEMPERATURE_CONTROL;
-  int min_white_balance = UVCGetControl(control, unit, sizeof(int32_t), UVC_GET_MIN);
-  int max_white_balance = UVCGetControl(control, unit, sizeof(int32_t), UVC_GET_MAX);
+  int min_white_balance = UVCGetControl(control, unit, sizeof(int16_t), UVC_GET_MIN);
+  int max_white_balance = UVCGetControl(control, unit, sizeof(int16_t), UVC_GET_MAX);
   if (request->data < min_white_balance || request->data > max_white_balance) {
     std::stringstream ss;
     ss << "Please set white balance between " << min_white_balance << "and " << max_white_balance;
