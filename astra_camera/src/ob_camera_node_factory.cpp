@@ -96,6 +96,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
   if (!ret && !connected_devices_.count(device_info->getUri())) {
     auto device = std::make_shared<openni::Device>();
     RCLCPP_INFO_STREAM(logger_, "Trying to open device: " << device_info->getUri());
+    std::this_thread::sleep_for(std::chrono::seconds(reconnection_delay_));
     auto rc = device->open(device_info->getUri());
     if (rc != openni::STATUS_OK) {
       RCLCPP_ERROR_STREAM(logger_, "Failed to open device: " << device_info->getUri() << " error: "
@@ -117,9 +118,6 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
         device_uri_ = device_info->getUri();
         connected_devices_[device_uri_] = *device_info;
         device_ = device;
-        if (!is_first_connection_) {
-          std::this_thread::sleep_for(std::chrono::seconds(reconnection_delay_));
-        }
         startDevice();
       }
     }
