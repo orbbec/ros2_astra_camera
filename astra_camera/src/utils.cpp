@@ -85,8 +85,8 @@ sensor_msgs::msg::CameraInfo::UniquePtr getDefaultCameraInfo(int width, int heig
   // Then P=K(I|0) = (K|0)
   info->p.fill(0.0);
   info->p[0] = info->p[5] = f;  // fx, fy
-  info->p[2] = info->p[2];      // cx
-  info->p[6] = info->p[5];      // cy
+  info->p[2] = info->k[2];      // cx
+  info->p[6] = info->k[5];      // cy
   info->p[10] = 1.0;
 
   return info;
