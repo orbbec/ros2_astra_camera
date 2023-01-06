@@ -117,5 +117,6 @@ const std::string OB_DABAI_PRO = "Orbbec Astra DaBai Pro";
 const std::string OB_DABAI_DCW = "Orbbec DaBai DCW";
 const std::string OB_DABAI_DW = "Orbbec DaBai DW";
 const std::string DEFAULT_SEM_NAME = "astra_device_sem";
+const key_t DEFAULT_SEM_KEY = 0x0401;
 
 }  // namespace astra_camera

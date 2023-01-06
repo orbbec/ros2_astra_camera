@@ -10,7 +10,6 @@
 /*                                                                        */
 /**************************************************************************/
 
-
 #pragma once
 
 #include <semaphore.h>
@@ -28,13 +27,13 @@ using DeviceConnectedCb = std::function<void(const openni::DeviceInfo*)>;
 
 using DeviceDisconnectedCb = std::function<void(const openni::DeviceInfo*)>;
 
-class DeviceListener : public openni::OpenNI::DeviceConnectedListener,
+class OBContext : public openni::OpenNI::DeviceConnectedListener,
                        public openni::OpenNI::DeviceDisconnectedListener,
                        public openni::OpenNI::DeviceStateChangedListener {
  public:
-  DeviceListener(DeviceConnectedCb connected_cb, DeviceDisconnectedCb disconnected_cb);
+  OBContext(DeviceDisconnectedCb disconnected_cb);
 
-  ~DeviceListener() override;
+  ~OBContext() override;
 
   void onDeviceStateChanged(const openni::DeviceInfo* pInfo, openni::DeviceState state) override;
 
@@ -42,10 +41,14 @@ class DeviceListener : public openni::OpenNI::DeviceConnectedListener,
 
   void onDeviceDisconnected(const openni::DeviceInfo* pInfo) override;
 
+  std::vector<openni::DeviceInfo> queryDeviceList();
+
  private:
   rclcpp::Logger logger_;
-  DeviceConnectedCb connected_cb_;
   DeviceDisconnectedCb disconnected_cb_;
+  bool first_query_ = true;
+  std::recursive_mutex mutex_;
+  std::map<std::string, openni::DeviceInfo> device_info_list_;
 };
 
 }  // namespace astra_camera

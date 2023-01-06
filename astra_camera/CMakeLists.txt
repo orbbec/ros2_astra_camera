@@ -47,7 +47,7 @@ pkg_search_module(GLOG REQUIRED libglog)
 
 if (NOT GLOG_FOUND)
   message(FATAL_ERROR "glog is not found")
-endif()
+endif ()
 
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES)
@@ -94,7 +94,7 @@ set(dependencies
 add_library(${PROJECT_NAME} SHARED
   src/point_cloud_proc/point_cloud_xyz.cpp
   src/point_cloud_proc/point_cloud_xyzrgb.cpp
-  src/device_listener.cpp
+  src/ob_context.cpp
   src/dynamic_params.cpp
   src/ob_camera_info.cpp
   src/ob_frame_listener.cpp
@@ -156,6 +156,33 @@ target_link_libraries(list_devices_node
   ${PROJECT_NAME}
   )
 
+add_executable(astra_clean_shm_node
+  src/clean_up_shm_node.cpp
+  )
+
+target_include_directories(astra_clean_shm_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${OpenCV_INCLUDED_DIRS}
+  ${LIBUVC_INCLUDE_DIRS}
+  ${GLOG__INCLUDE_DIRS}
+  )
+
+ament_target_dependencies(astra_clean_shm_node
+  ${dependencies}
+  )
+target_link_libraries(astra_clean_shm_node
+  ${OpenCV_LIBS}
+  Eigen3::Eigen
+  ${GLOG_LIBRARIES}
+  magic_enum::magic_enum
+  ${LIBUVC_LIBRARIES}
+  -lOpenNI2
+  -L${ORBBEC_OPENNI2_REDIST}
+  ${PROJECT_NAME}
+  )
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE "COMPOSITION_BUILDING_DLL")
 
 rclcpp_components_register_nodes(${PROJECT_NAME}
@@ -178,6 +205,7 @@ install(DIRECTORY openni2_redist/${HOST_PLATFORM}/OpenNI2
   )
 
 install(TARGETS list_devices_node
+  astra_clean_shm_node
   DESTINATION lib/${PROJECT_NAME}/
   )
 
