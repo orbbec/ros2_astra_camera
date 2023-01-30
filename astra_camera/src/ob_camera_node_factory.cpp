@@ -23,13 +23,6 @@ OBCameraNodeFactory::OBCameraNodeFactory(const rclcpp::NodeOptions& node_options
   init();
 }
 
-[[maybe_unused]] OBCameraNodeFactory::OBCameraNodeFactory(const std::string& node_name,
-                                                          const std::string& ns,
-                                                          const rclcpp::NodeOptions& node_options)
-    : Node(node_name, ns, node_options), logger_(get_logger()) {
-  init();
-}
-
 OBCameraNodeFactory::~OBCameraNodeFactory() {
   is_alive_ = false;
   device_connected_ = false;
@@ -73,10 +66,10 @@ void OBCameraNodeFactory::init() {
     exit(-1);
   }
   parameters_ = std::make_shared<Parameters>(this);
-  use_uvc_camera_ = declare_parameter<bool>("uvc_camera.enable", false);
+  use_uvc_camera_ = declare_parameter<bool>("use_uvc_camera", false);
   serial_number_ = declare_parameter<std::string>("serial_number", "");
   device_num_ = declare_parameter<int>("device_num", 1);
-  connection_delay_ = declare_parameter<int>("connection_delay", 1);
+  connection_delay_ = declare_parameter<int>("connection_delay", 100);
 
   auto disconnected_cb = [this](const openni::DeviceInfo* device_info) {
     onDeviceDisconnected(device_info);
@@ -100,17 +93,9 @@ void OBCameraNodeFactory::startDevice(const std::shared_ptr<openni::Device>& dev
   }
   CHECK_NOTNULL(device_);
   CHECK_NOTNULL(parameters_);
-  if (use_uvc_camera_) {
-    if (uvc_camera_driver_) {
-      uvc_camera_driver_.reset();
-    }
-    uvc_camera_driver_ = std::make_shared<UVCCameraDriver>(this, parameters_, serial_number_);
-    ob_camera_node_ =
-        std::make_unique<OBCameraNode>(this, device_, parameters_, uvc_camera_driver_);
-  } else {
-    ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_);
-  }
+  ob_camera_node_ = std::make_unique<OBCameraNode>(this, device_, parameters_, use_uvc_camera_);
   device_connected_ = true;
+  RCLCPP_INFO_STREAM(logger_, "device " << serial_number_ << " started.");
 }
 
 void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_info) {
@@ -146,7 +131,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
   }
   auto device = std::make_shared<openni::Device>();
   RCLCPP_INFO_STREAM(logger_, "Trying to open device: " << device_info->getUri());
-  std::this_thread::sleep_for(std::chrono::seconds(connection_delay_));
+  std::this_thread::sleep_for(std::chrono::milliseconds(connection_delay_));
   auto rc = device->open(device_info->getUri());
   if (rc != openni::STATUS_OK) {
     RCLCPP_INFO_STREAM(logger_, "Failed to open device: " << device_info->getUri() << " error: "
@@ -205,6 +190,7 @@ void OBCameraNodeFactory::onDeviceConnected(const openni::DeviceInfo* device_inf
   }
   if (!device_connected_) {
     RCLCPP_INFO_STREAM(logger_, "Device: " << device_info->getUri() << " is not connected");
+    CHECK_NOTNULL(device);
     device->close();
     RCLCPP_INFO_STREAM(logger_, "OBCameraNodeFactory::onDeviceConnected close done.");
   }
@@ -220,9 +206,6 @@ void OBCameraNodeFactory::onDeviceDisconnected(const openni::DeviceInfo* device_
       device_->close();
       device_.reset();
     }
-    if (uvc_camera_driver_) {
-      uvc_camera_driver_.reset();
-    }
     RCLCPP_INFO_STREAM(logger_, "Device disconnected: " << device_info->getUri());
     device_connected_ = false;
     sem_unlink(DEFAULT_SEM_NAME.c_str());
@@ -231,7 +214,7 @@ void OBCameraNodeFactory::onDeviceDisconnected(const openni::DeviceInfo* device_
 
 void OBCameraNodeFactory::checkConnectionTimer() {
   if (!device_connected_) {
-    RCLCPP_INFO(logger_, "wait for device %s connect... ", serial_number_.c_str());
+    // RCLCPP_INFO(logger_, "wait for device %s connect... ", serial_number_.c_str());
   }
 }
 

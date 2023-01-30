@@ -42,7 +42,7 @@ astra_camera_msgs::msg::Extrinsics obExtrinsicsToMsg(const float rotation[9],
                                                      const float transition[3],
                                                      const std::string& frame_id);
 
-sensor_msgs::msg::CameraInfo::UniquePtr getDefaultCameraInfo(int width, int height, double f);
+sensor_msgs::msg::CameraInfo getDefaultCameraInfo(int width, int height, double f);
 
 bool isValidCameraParams(const OBCameraParams& params);
 
@@ -64,4 +64,9 @@ inline void setAndGetNodeParameter(
                         "Failed to set parameter: " << param_name << ". " << ex.what());
   }
 }
+
+rmw_qos_profile_t getRMWQosProfileFromString(const std::string& str_qos);
+
+openni::PixelFormat getPixelFormat(const std::string& str_format);
+
 }  // namespace astra_camera

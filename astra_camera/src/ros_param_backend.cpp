@@ -25,7 +25,7 @@ ParametersBackend::~ParametersBackend() {
 
 void ParametersBackend::addOnSetParametersCallback(
     rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType callback) {
-  ros_callback_ = node_->add_on_set_parameters_callback(callback);
+  ros_callback_ = node_->add_on_set_parameters_callback(std::move(callback));
 }
 
 }  // namespace astra_camera

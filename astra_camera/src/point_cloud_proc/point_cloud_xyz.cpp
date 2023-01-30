@@ -39,20 +39,29 @@
 
 namespace astra_camera {
 
-PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions &options)
-    : Node("PointCloudXyzNode", options) {
+PointCloudXyzNode::PointCloudXyzNode(rclcpp::Node *const node,
+                                     std::shared_ptr<Parameters> parameters)
+    : node_(node), parameters_(std::move(parameters)) {
   // Read parameters
-  queue_size_ = static_cast<int>(declare_parameter<int>("queue_size", 5));
-
+  setAndGetNodeParameter<int>(parameters_, queue_size_, "queue_size", 5);
+  std::string point_cloud_qos;
+  std::string depth_qos;
+  setAndGetNodeParameter<std::string>(parameters_, point_cloud_qos, "point_cloud_qos",
+                                      "default");
+  setAndGetNodeParameter<std::string>(parameters_, depth_qos, "depth_qos", "default");
+  depth_qos_profile_ = getRMWQosProfileFromString(depth_qos);
   // Monitor whether anyone is subscribed to the output
   // TODO(ros2) Implement when SubscriberStatusCallback is available
   // ros::SubscriberStatusCallback connect_cb = boost::bind(&PointCloudXyzNode::connectCb, this);
   connectCb();
 
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
-  std::lock_guard<std::mutex> lock(connect_mutex_);
+  std::scoped_lock<decltype(connect_mutex_)> lock(connect_mutex_);
   // TODO(ros2) Implement when SubscriberStatusCallback is available
-  pub_point_cloud_ = create_publisher<PointCloud2>("depth/points", rclcpp::QoS{1});
+  point_cloud_qos_profile_ = getRMWQosProfileFromString(point_cloud_qos);
+  pub_point_cloud_ = node_->create_publisher<PointCloud2>(
+      "depth/points", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(point_cloud_qos_profile_),
+                                  point_cloud_qos_profile_));
 }
 
 template <typename T>
@@ -99,13 +108,13 @@ void PointCloudXyzNode::convertDepth(const sensor_msgs::msg::Image::ConstSharedP
 
 // Handles (un)subscribing when clients (un)subscribe
 void PointCloudXyzNode::connectCb() {
-  std::lock_guard<std::mutex> lock(connect_mutex_);
+  std::scoped_lock<decltype(connect_mutex_)> lock(connect_mutex_);
   if (!sub_depth_) {
-    auto custom_qos = rmw_qos_profile_sensor_data;
+    auto custom_qos = depth_qos_profile_;
     custom_qos.depth = queue_size_;
 
     sub_depth_ = image_transport::create_camera_subscription(
-        this, "depth/image_raw",
+        node_, "depth/image_raw",
         [this](const sensor_msgs::msg::Image::ConstSharedPtr &msg,
                const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) { depthCb(msg, info); },
         "raw", custom_qos);
@@ -141,8 +150,3 @@ void PointCloudXyzNode::depthCb(const Image::ConstSharedPtr &depth_msg,
 }
 
 }  // namespace astra_camera
-
-#include "rclcpp_components/register_node_macro.hpp"
-
-// Register the component with class_loader.
-RCLCPP_COMPONENTS_REGISTER_NODE(astra_camera::PointCloudXyzNode)

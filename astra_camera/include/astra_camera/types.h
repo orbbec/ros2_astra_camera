@@ -16,7 +16,6 @@
 #include <sensor_msgs/image_encodings.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
-#include <magic_enum.hpp>
 
 #include <openni2/OpenNI.h>
 
@@ -27,6 +26,7 @@
 #include "astra_camera_msgs/srv/get_string.hpp"
 #include "astra_camera_msgs/srv/get_camera_info.hpp"
 #include "astra_camera_msgs/srv/get_camera_params.hpp"
+#include "magic_enum/magic_enum.hpp"
 
 namespace astra_camera {
 

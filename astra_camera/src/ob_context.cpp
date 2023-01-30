@@ -11,7 +11,7 @@
 /**************************************************************************/
 
 #include "astra_camera/ob_context.h"
-#include <magic_enum.hpp>
+#include "magic_enum/magic_enum.hpp"
 
 namespace astra_camera {
 
@@ -62,13 +62,13 @@ void OBContext::onDeviceStateChanged(const openni::DeviceInfo* device_info,
 
 void OBContext::onDeviceConnected(const openni::DeviceInfo* device_info) {
   RCLCPP_INFO_STREAM(logger_, "onDeviceConnected");
-  std::lock_guard<decltype(mutex_)> lock(mutex_);
+  std::scoped_lock<decltype(mutex_)> lock(mutex_);
   device_info_list_[device_info->getUri()] = *device_info;
 }
 
 void OBContext::onDeviceDisconnected(const openni::DeviceInfo* device_info) {
   RCLCPP_INFO_STREAM(logger_, "onDeviceDisconnected");
-  std::lock_guard<decltype(mutex_)> lock(mutex_);
+  std::scoped_lock<decltype(mutex_)> lock(mutex_);
   disconnected_cb_(device_info);
   device_info_list_.erase(device_info->getUri());
   RCLCPP_INFO_STREAM(logger_, "onDeviceDisconnected done.");

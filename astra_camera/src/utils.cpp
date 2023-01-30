@@ -11,7 +11,7 @@
 /**************************************************************************/
 
 #include "astra_camera/utils.h"
-#include <magic_enum.hpp>
+#include "magic_enum/magic_enum.hpp"
 
 #include <sensor_msgs/distortion_models.hpp>
 
@@ -59,35 +59,35 @@ astra_camera_msgs::msg::Extrinsics obExtrinsicsToMsg(const float rotation[9],
   return msg;
 }
 
-sensor_msgs::msg::CameraInfo::UniquePtr getDefaultCameraInfo(int width, int height, double f) {
-  auto info = std::make_unique<sensor_msgs::msg::CameraInfo>();
+sensor_msgs::msg::CameraInfo getDefaultCameraInfo(int width, int height, double f) {
+  sensor_msgs::msg::CameraInfo info;
 
-  info->width = width;
-  info->height = height;
+  info.width = width;
+  info.height = height;
 
   // No distortion
-  info->d.resize(5, 0.0);
-  info->distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+  info.d.resize(5, 0.0);
+  info.distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
 
   // Simple camera matrix: square pixels (fx = fy), principal point at center
-  info->k.fill(0.0);
-  info->k[0] = info->k[4] = f;
+  info.k.fill(0.0);
+  info.k[0] = info.k[4] = f;
 
-  info->k[2] = (static_cast<double>(width) / 2) - 0.5;
+  info.k[2] = (static_cast<double>(width) / 2) - 0.5;
   // Aspect ratio for the camera center on Astra (and other devices?) is 4/3
   // This formula keeps the principal point the same in VGA and SXGA modes
-  info->k[5] = (static_cast<double>(width) * (3. / 8.)) - 0.5;
-  info->k[8] = 1.0;
+  info.k[5] = (static_cast<double>(width) * (3. / 8.)) - 0.5;
+  info.k[8] = 1.0;
 
   // No separate rectified image plane, so R = I
-  info->r[0] = info->r[4] = info->r[8] = 1.0;
+  info.r[0] = info.r[4] = info.r[8] = 1.0;
 
   // Then P=K(I|0) = (K|0)
-  info->p.fill(0.0);
-  info->p[0] = info->p[5] = f;  // fx, fy
-  info->p[2] = info->k[2];      // cx
-  info->p[6] = info->k[5];      // cy
-  info->p[10] = 1.0;
+  info.p.fill(0.0);
+  info.p[0] = info.p[5] = f;  // fx, fy
+  info.p[2] = info.k[2];      // cx
+  info.p[6] = info.k[5];      // cy
+  info.p[10] = 1.0;
 
   return info;
 }
@@ -113,6 +113,56 @@ std::vector<std::string> split(const std::string& str, char delim) {
   return elems;
 }
 
+rmw_qos_profile_t getRMWQosProfileFromString(const std::string& str_qos) {
+  std::string upper_str_qos = str_qos;
+  std::transform(upper_str_qos.begin(), upper_str_qos.end(), upper_str_qos.begin(), ::toupper);
+  if (upper_str_qos == "SYSTEM_DEFAULT") {
+    return rmw_qos_profile_system_default;
+  } else if (upper_str_qos == "DEFAULT") {
+    return rmw_qos_profile_default;
+  } else if (upper_str_qos == "PARAMETER_EVENTS") {
+    return rmw_qos_profile_parameter_events;
+  } else if (upper_str_qos == "SERVICES_DEFAULT") {
+    return rmw_qos_profile_services_default;
+  } else if (upper_str_qos == "PARAMETERS") {
+    return rmw_qos_profile_parameters;
+  } else if (upper_str_qos == "SENSOR_DATA") {
+    return rmw_qos_profile_sensor_data;
+  } else {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("astra_camera"),
+                        "Invalid QoS profile: " << upper_str_qos << ". Using default QoS profile.");
+    return rmw_qos_profile_default;
+  }
+}
 
-
+openni::PixelFormat getPixelFormat(const std::string& str_format) {
+  std::string upper_str_format = str_format;
+  std::transform(upper_str_format.begin(), upper_str_format.end(), upper_str_format.begin(),
+                 ::toupper);
+  if (upper_str_format == "GRAY8") {
+    return openni::PIXEL_FORMAT_GRAY8;
+  } else if (upper_str_format == "GRAY16") {
+    return openni::PIXEL_FORMAT_GRAY16;
+  } else if (upper_str_format == "RGB888") {
+    return openni::PIXEL_FORMAT_RGB888;
+  } else if (upper_str_format == "YUV422") {
+    return openni::PIXEL_FORMAT_YUV422;
+  } else if (upper_str_format == "JPEG") {
+    return openni::PIXEL_FORMAT_JPEG;
+  } else if (upper_str_format == "YUYV") {
+    return openni::PIXEL_FORMAT_YUYV;
+  } else if (upper_str_format == "DEPTH_1_MM") {
+    return openni::PIXEL_FORMAT_DEPTH_1_MM;
+  } else if (upper_str_format == "DEPTH_100_UM") {
+    return openni::PIXEL_FORMAT_DEPTH_100_UM;
+  } else if (upper_str_format == "SHIFT_9_2") {
+    return openni::PIXEL_FORMAT_SHIFT_9_2;
+  } else if (upper_str_format == "SHIFT_9_3") {
+    return openni::PIXEL_FORMAT_SHIFT_9_3;
+  } else {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("astra_camera"),
+                        "Invalid pixel format: " << upper_str_format << ". Using default format.");
+    return openni::PIXEL_FORMAT_DEPTH_1_MM;
+  }
+}
 }  // namespace astra_camera

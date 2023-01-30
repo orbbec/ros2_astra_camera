@@ -50,6 +50,7 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config);
 class UVCCameraDriver {
  public:
   explicit UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters> parameters,
+                           sensor_msgs::msg::CameraInfo camera_info,
                            const std::string& serial_number);
 
   ~UVCCameraDriver();
@@ -126,6 +127,7 @@ class UVCCameraDriver {
   UVCCameraConfig config_;
   ImageROI roi_;
   std::string camera_name_ = "camera";
+  std::string color_info_url_;
   uvc_context_t* ctx_ = nullptr;
   uvc_device_t* device_ = nullptr;
   uvc_device_handle_t* device_handle_ = nullptr;
@@ -133,6 +135,9 @@ class UVCCameraDriver {
   uvc_stream_ctrl_t ctrl_{};
   int uvc_flip_{0};
   std::atomic_bool is_streaming_started{false};
+  std::atomic_bool is_camera_opened_{false};
+  rmw_qos_profile_t color_qos_profile_ = rmw_qos_profile_unknown;
+  rmw_qos_profile_t color_info_qos_profile_ = rmw_qos_profile_unknown;
 
   rclcpp::Service<GetInt32>::SharedPtr get_uvc_exposure_srv_;
   rclcpp::Service<SetInt32>::SharedPtr set_uvc_exposure_srv_;
@@ -148,8 +153,9 @@ class UVCCameraDriver {
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_publisher_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher_;
-  std::optional<sensor_msgs::msg::CameraInfo> camera_info_;
-  rclcpp::Client<GetCameraInfo>::SharedPtr get_camera_info_cli_;
+  sensor_msgs::msg::CameraInfo camera_info_;
+  std::unique_ptr<camera_info_manager::CameraInfoManager> camera_info_manager_ = nullptr;
+  int device_num_ = 1;
 };
 
 }  // namespace astra_camera

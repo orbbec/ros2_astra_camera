@@ -3,8 +3,8 @@
 /* Copyright (c) 2013-2022 Orbbec 3D Technology, Inc                      */
 /*                                                                        */
 /* PROPRIETARY RIGHTS of Orbbec 3D Technology are involved in the         */
-/* subject matter of this material. All manufacturing, reproduction, use, */
-/* and sales rights pertaining to this subject matter are governed by the */
+/* subject of this material. All manufacturing, reproduction, use, */
+/* and sales rights pertaining to this subject are governed by the */
 /* license agreement. The recipient of this software implicitly accepts   */
 /* the terms of the license.                                              */
 /*                                                                        */
@@ -14,7 +14,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <magic_enum.hpp>
 
 #include <opencv2/opencv.hpp>
 #include <cv_bridge/cv_bridge.h>
@@ -46,17 +45,17 @@
 #include "uvc_camera_driver.h"
 #include "dynamic_params.h"
 #include "types.h"
-#include "ob_frame_listener.h"
+#include "point_cloud_proc/point_cloud_proc.h"
+#include "magic_enum/magic_enum.hpp"
+
 
 namespace astra_camera {
 class OBCameraNode {
  public:
-  OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> device,
-               std::shared_ptr<Parameters> parameters);
+  OBCameraNode() = delete;
 
   OBCameraNode(rclcpp::Node* node, std::shared_ptr<openni::Device> device,
-               std::shared_ptr<Parameters> parameters,
-               std::shared_ptr<UVCCameraDriver> uvc_camera_driver);
+               std::shared_ptr<Parameters> parameters, bool use_uvc_camera);
 
   ~OBCameraNode();
 
@@ -65,15 +64,19 @@ class OBCameraNode {
   void init();
 
  private:
+  void pollFrame();
+
   void setupCameraCtrlServices();
 
   void setupConfig();
 
   void setupDevices();
 
-  void setupFrameCallback();
-
   void setupVideoMode();
+
+  void setupCameraInfoManager();
+
+  void setupUVCCamera();
 
   void startStreams();
 
@@ -94,7 +97,7 @@ class OBCameraNode {
 
   void publishStaticTransforms();
 
-  void setImageRegistrationMode(bool data);
+  void setImageRegistrationMode(bool enable);
 
   bool setMirrorCallback(const std::shared_ptr<SetBool::Request>& request,
                          std::shared_ptr<SetBool::Response>& response,
@@ -149,7 +152,6 @@ class OBCameraNode {
   bool getCameraParamsCallback(const std::shared_ptr<GetCameraParams::Request>& request,
                                std::shared_ptr<GetCameraParams::Response>& response);
 
-
   bool toggleSensorCallback(const std::shared_ptr<SetBool::Request>& request,
                             std::shared_ptr<SetBool::Response>& response,
                             const stream_index_pair& stream_index);
@@ -173,23 +175,30 @@ class OBCameraNode {
 
   double getFocalLength(const stream_index_pair& stream_index, int y_resolution);
 
-  CameraInfo::UniquePtr getIRCameraInfo();
+  CameraInfo getIRCameraInfo(int width, int height, double f);
 
-  CameraInfo::UniquePtr getDepthCameraInfo();
+  CameraInfo getDepthCameraInfo();
 
-  CameraInfo::UniquePtr getColorCameraInfo();
+  CameraInfo getColorCameraInfo();
+
+  std::string getSerialNumber();
 
  private:
-  rclcpp::Node* node_;
-  std::shared_ptr<openni::Device> device_;
-  std::shared_ptr<Parameters> parameters_;
+  rclcpp::Node* node_ = nullptr;
+  std::shared_ptr<openni::Device> device_ = nullptr;
+  std::shared_ptr<Parameters> parameters_ = nullptr;
   std::shared_ptr<UVCCameraDriver> uvc_camera_driver_ = nullptr;
   rclcpp::Logger logger_;
   bool use_uvc_camera_ = false;
   openni::DeviceInfo device_info_{};
   std::string camera_name_ = "camera";
   std::atomic_bool is_running_{false};
-  std::map<stream_index_pair, bool> enable_;
+  std::atomic_bool is_initialized_{false};
+  std::condition_variable stream_started_cv_;
+  std::mutex stream_lock_;
+  std::atomic_bool run_streaming_poller_{false};
+  std::shared_ptr<std::thread> poll_stream_thread_ = nullptr;
+  std::map<stream_index_pair, bool> enable_stream_;
   std::map<stream_index_pair, bool> stream_started_;
   std::map<stream_index_pair, int> width_;
   std::map<stream_index_pair, int> height_;
@@ -198,6 +207,8 @@ class OBCameraNode {
   std::map<stream_index_pair, int> image_format_;
   std::map<stream_index_pair, std::string> encoding_;
   std::map<stream_index_pair, cv::Mat> images_;
+  std::map<stream_index_pair, std::string> image_qos_;
+  std::map<stream_index_pair, std::string> camera_info_qos_;
   std::vector<int> compression_params_;
   std::string camera_link_frame_id_;
   std::map<stream_index_pair, std::string> frame_id_;
@@ -207,10 +218,9 @@ class OBCameraNode {
   std::map<stream_index_pair, std::shared_ptr<openni::VideoStream>> streams_;
   std::map<stream_index_pair, openni::VideoMode> stream_video_mode_;
   std::map<stream_index_pair, std::vector<openni::VideoMode>> supported_video_modes_;
-  std::map<stream_index_pair, std::shared_ptr<OBFrameListener>> stream_frame_listener_;
-  std::map<stream_index_pair, FrameCallbackFunction> stream_frame_callback_;
   std::map<stream_index_pair, int> unit_step_size_;
-  std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr> image_publishers_;
+  std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>
+      image_publishers_;
   std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>
       camera_info_publishers_;
 
@@ -234,14 +244,14 @@ class OBCameraNode {
   rclcpp::Service<GetCameraInfo>::SharedPtr get_camera_info_srv_;
 
   bool publish_tf_ = true;
-  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
-  std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_tf_broadcaster_;
+  std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_ = nullptr;
+  std::shared_ptr<tf2_ros::TransformBroadcaster> dynamic_tf_broadcaster_ = nullptr;
   std::vector<geometry_msgs::msg::TransformStamped> static_tf_msgs_;
-  rclcpp::Publisher<Extrinsics>::SharedPtr extrinsics_publisher_;
-  std::shared_ptr<std::thread> tf_thread_;
+  rclcpp::Publisher<Extrinsics>::SharedPtr extrinsics_publisher_ = nullptr;
+  std::shared_ptr<std::thread> tf_thread_ = nullptr;
   std::condition_variable tf_cv_;
   double tf_publish_rate_ = 10.0;
-  bool depth_align_ = false;
+  bool depth_registration_ = false;
   std::optional<OBCameraParams> camera_params_;
   double depth_ir_x_offset_ = 0.0;
   double depth_ir_y_offset_ = 0.0;
@@ -249,6 +259,17 @@ class OBCameraNode {
   ImageROI color_roi_;
   ImageROI depth_roi_;
   int depth_scale_ = 1;
+  std::string point_cloud_qos_;
+  std::unique_ptr<PointCloudXyzNode> point_cloud_processor_ = nullptr;
+  std::unique_ptr<PointCloudXyzrgbNode> colored_point_cloud_processor_ = nullptr;
+  bool enable_point_cloud_ = true;
+  bool enable_colored_point_cloud_ = false;
+  std::recursive_mutex device_lock_;
+  std::unique_ptr<camera_info_manager::CameraInfoManager> ir_info_manager_ = nullptr;
+  std::unique_ptr<camera_info_manager::CameraInfoManager> color_info_manager_ = nullptr;
+  std::string color_info_url_;
+  std::string ir_info_url_;
+  bool enable_publish_extrinsic_ = false;
 };
 
 }  // namespace astra_camera

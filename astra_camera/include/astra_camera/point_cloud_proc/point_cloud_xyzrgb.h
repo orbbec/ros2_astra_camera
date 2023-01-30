@@ -52,23 +52,28 @@
 
 #include "depth_traits.h"
 #include "point_cloud_xyz.h"
+#include "astra_camera/utils.h"
+#include "astra_camera/dynamic_params.h"
 
 namespace astra_camera {
 
 namespace enc = sensor_msgs::image_encodings;
 
-class PointCloudXyzrgbNode : public rclcpp::Node {
+class PointCloudXyzrgbNode {
  public:
-  explicit PointCloudXyzrgbNode(const rclcpp::NodeOptions& options);
-  void convertRgb(const sensor_msgs::msg::Image::ConstSharedPtr &rgb_msg,
-                  sensor_msgs::msg::PointCloud2::SharedPtr &cloud_msg, int red_offset,
+  explicit PointCloudXyzrgbNode(rclcpp::Node* node, std::shared_ptr<Parameters> parameters);
+  void convertRgb(const sensor_msgs::msg::Image::ConstSharedPtr& rgb_msg,
+                  sensor_msgs::msg::PointCloud2::SharedPtr& cloud_msg, int red_offset,
                   int green_offset, int blue_offset, int color_step);
 
  private:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
-
+  rclcpp::Node* const node_;
+  std::shared_ptr<Parameters> parameters_;
+  rmw_qos_profile_t point_cloud_qos_profile_;
+  rmw_qos_profile_t color_qos_profile_, depth_qos_profile_, info_qos_profile_;
   // Subscriptions
   image_transport::SubscriberFilter sub_depth_, sub_rgb_;
   message_filters::Subscriber<CameraInfo> sub_info_;

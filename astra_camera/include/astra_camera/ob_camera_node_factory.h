@@ -14,7 +14,6 @@
 #include <atomic>
 #include <thread>
 
-#include <magic_enum.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,15 +22,13 @@
 #include "ob_camera_node.h"
 #include "uvc_camera_driver.h"
 #include "ob_context.h"
+#include "magic_enum/magic_enum.hpp"
+
 
 namespace astra_camera {
 class OBCameraNodeFactory : public rclcpp::Node {
  public:
   explicit OBCameraNodeFactory(const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions());
-
-  [[maybe_unused]] OBCameraNodeFactory(
-      const std::string& node_name, const std::string& ns,
-      const rclcpp::NodeOptions& node_options = rclcpp::NodeOptions());
 
   ~OBCameraNodeFactory() override;
 
@@ -57,7 +54,6 @@ class OBCameraNodeFactory : public rclcpp::Node {
   std::unique_ptr<OBCameraNode> ob_camera_node_ = nullptr;
   std::shared_ptr<openni::Device> device_ = nullptr;
   std::shared_ptr<Parameters> parameters_ = nullptr;
-  std::shared_ptr<UVCCameraDriver> uvc_camera_driver_ = nullptr;
   std::shared_ptr<openni::DeviceInfo> device_info_ = nullptr;
   bool use_uvc_camera_ = false;
   UVCCameraConfig uvc_config_;
