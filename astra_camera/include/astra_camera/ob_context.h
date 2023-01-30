@@ -20,6 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <openni2/OpenNI.h>
+#include <mutex>
 
 namespace astra_camera {
 
@@ -28,10 +29,10 @@ using DeviceConnectedCb = std::function<void(const openni::DeviceInfo*)>;
 using DeviceDisconnectedCb = std::function<void(const openni::DeviceInfo*)>;
 
 class OBContext : public openni::OpenNI::DeviceConnectedListener,
-                       public openni::OpenNI::DeviceDisconnectedListener,
-                       public openni::OpenNI::DeviceStateChangedListener {
+                  public openni::OpenNI::DeviceDisconnectedListener,
+                  public openni::OpenNI::DeviceStateChangedListener {
  public:
-  OBContext(DeviceDisconnectedCb disconnected_cb);
+  explicit OBContext(DeviceDisconnectedCb disconnected_cb);
 
   ~OBContext() override;
 

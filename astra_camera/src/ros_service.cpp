@@ -12,18 +12,18 @@
 /**************************************************************************/
 
 #include <rclcpp/rclcpp.hpp>
-#include <nlohmann/json.hpp>
 #include <thread>
 
 #include "astra_camera/utils.h"
 #include "astra_camera/ob_camera_node.h"
+#include "astra_camera/json.hpp"
 
 namespace astra_camera {
 
 void OBCameraNode::setupCameraCtrlServices() {
   using std_srvs::srv::SetBool;
   for (auto stream_index : IMAGE_STREAMS) {
-    if (!enable_[stream_index]) {
+    if (!enable_stream_[stream_index]) {
       RCLCPP_INFO_STREAM(logger_, stream_name_[stream_index] << " is not enable");
       continue;
     }
@@ -178,6 +178,15 @@ bool OBCameraNode::setExposureCallback(const std::shared_ptr<SetInt32::Request>&
     }
   }
   return false;
+}
+
+std::string OBCameraNode::getSerialNumber() {
+  char serial_number_str[128] = {0};
+  int data_size = sizeof(serial_number_str);
+  std::scoped_lock<decltype(device_lock_)> lock(device_lock_);
+  device_->getProperty(openni::OBEXTENSION_ID_SERIALNUMBER, (uint8_t*)&serial_number_str,
+                       &data_size);
+  return serial_number_str;
 }
 
 bool OBCameraNode::getGainCallback(const std::shared_ptr<GetInt32::Request>& request,
@@ -388,7 +397,7 @@ bool OBCameraNode::getCameraInfoCallback(const std::shared_ptr<GetCameraInfo::Re
                                          std::shared_ptr<GetCameraInfo::Response>& response) {
   (void)request;
   auto camera_info = getColorCameraInfo();
-  response->info = *camera_info;
+  response->info = camera_info;
   return true;
 }
 
@@ -451,9 +460,9 @@ bool OBCameraNode::toggleSensor(const stream_index_pair& stream_index, bool enab
   }
 
   if (enabled) {
-    enable_[stream_index] = true;
+    enable_stream_[stream_index] = true;
   } else {
-    enable_[stream_index] = false;
+    enable_stream_[stream_index] = false;
   }
   stopStreams();
   startStreams();

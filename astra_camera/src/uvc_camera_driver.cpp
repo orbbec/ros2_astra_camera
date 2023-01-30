@@ -45,8 +45,12 @@ std::ostream& operator<<(std::ostream& os, const UVCCameraConfig& config) {
 }
 
 UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters> parameters,
+                                 sensor_msgs::msg::CameraInfo camera_info,
                                  const std::string& serial_number)
-    : node_(node), logger_(node_->get_logger()), parameters_(parameters) {
+    : node_(node),
+      logger_(node_->get_logger()),
+      parameters_(std::move(parameters)),
+      camera_info_(std::move(camera_info)) {
   auto err = uvc_init(&ctx_, nullptr);
   if (err != UVC_SUCCESS) {
     uvc_perror(err, "ERROR: uvc_init");
@@ -54,25 +58,42 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters>
     exit(err);
   }
   config_.serial_number = serial_number;
-  setAndGetNodeParameter(parameters_, config_.vendor_id, "uvc_camera.vid", 0);
-  setAndGetNodeParameter(parameters_, config_.product_id, "uvc_camera.pid", 0);
+  setAndGetNodeParameter(parameters_, device_num_, "device_num", 1);
+  setAndGetNodeParameter(parameters_, config_.vendor_id, "uvc_vendor_id", 0);
+  setAndGetNodeParameter(parameters_, config_.product_id, "uvc_product_id", 0);
   setAndGetNodeParameter(parameters_, config_.width, "color_width", 640);
   setAndGetNodeParameter(parameters_, config_.height, "color_height", 480);
   setAndGetNodeParameter(parameters_, config_.fps, "color_fps", 30);
-  setAndGetNodeParameter<std::string>(parameters_, config_.format, "uvc_camera.format", "mjpeg");
-  setAndGetNodeParameter(parameters_, config_.retry_count, "uvc_camera.retry_count", 500);
-  setAndGetNodeParameter(parameters_, roi_.x, "color_roi.x", -1);
-  setAndGetNodeParameter(parameters_, roi_.y, "color_roi.y", -1);
-  setAndGetNodeParameter(parameters_, roi_.width, "color_roi.width", -1);
-  setAndGetNodeParameter(parameters_, roi_.height, "color_roi.height", -1);
+  setAndGetNodeParameter<std::string>(parameters_, config_.format, "uvc_camera_format", "mjpeg");
+  setAndGetNodeParameter(parameters_, config_.retry_count, "uvc_retry_count", 500);
+  setAndGetNodeParameter(parameters_, roi_.x, "color_roi_x", -1);
+  setAndGetNodeParameter(parameters_, roi_.y, "color_roi_y", -1);
+  setAndGetNodeParameter(parameters_, roi_.width, "color_roi_width", -1);
+  setAndGetNodeParameter(parameters_, roi_.height, "color_roi_height", -1);
   setAndGetNodeParameter(parameters_, camera_name_, "camera_name", camera_name_);
-  config_.frame_id = camera_name_ + "_color_frame";
-  config_.optical_frame_id = camera_name_ + "_color_optical_frame";
+  setAndGetNodeParameter<std::string>(parameters_, config_.frame_id, "color_frame_id",
+                                      "color_frame");
+  setAndGetNodeParameter<std::string>(parameters_, config_.optical_frame_id,
+                                      "color_optical_frame_id", "color_optical_frame");
+  std::string rgb_qos_profile_str, rgb_info_qos_profile_str;
+  setAndGetNodeParameter<std::string>(parameters_, rgb_qos_profile_str, "rgb_qos_profile",
+                                      "default");
+  setAndGetNodeParameter<std::string>(parameters_, rgb_info_qos_profile_str, "rgb_info_qos_profile",
+                                      "default");
+  color_qos_profile_ = getRMWQosProfileFromString(rgb_qos_profile_str);
+  color_info_qos_profile_ = getRMWQosProfileFromString(rgb_info_qos_profile_str);
+  setAndGetNodeParameter<std::string>(parameters_, color_info_url_, "color_info_url", "");
+  if (!color_info_url_.empty()) {
+    camera_info_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(
+        node_, "rgb_camera", color_info_url_);
+  }
+  image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>(
+      "color/image_raw",
+      rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_qos_profile_), color_qos_profile_));
+  camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
+      "color/camera_info", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_info_qos_profile_),
+                                       color_info_qos_profile_));
   setupCameraControlService();
-  image_publisher_ =
-      node_->create_publisher<sensor_msgs::msg::Image>("color/image_raw", rclcpp::QoS{1});
-  camera_info_publisher_ =
-      node_->create_publisher<sensor_msgs::msg::CameraInfo>("color/camera_info", rclcpp::QoS{1});
   openCamera();
 }
 
@@ -95,6 +116,9 @@ void UVCCameraDriver::openCamera() {
   auto serial_number = config_.serial_number.empty() ? nullptr : config_.serial_number.c_str();
   CHECK(device_ == nullptr);
   err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, serial_number);
+  if (err != UVC_SUCCESS && device_num_ == 1) {
+    err = uvc_find_device(ctx_, &device_, config_.vendor_id, config_.product_id, nullptr);
+  }
   if (err != UVC_SUCCESS) {
     uvc_perror(err, "ERROR: uvc_find_device");
     RCLCPP_ERROR_STREAM(logger_,
@@ -109,9 +133,11 @@ void UVCCameraDriver::openCamera() {
   }
   RCLCPP_INFO_STREAM(logger_, "uvc config: " << config_);
   if (err != UVC_SUCCESS) {
-    RCLCPP_ERROR_STREAM(logger_, "Find device error " << uvc_strerror(err));
+    std::stringstream ss;
+    ss << "Find device error " << uvc_strerror(err);
+    RCLCPP_ERROR_STREAM(logger_, ss.str());
     uvc_unref_device(device_);
-    exit(-1);
+    throw std::runtime_error(ss.str());
   }
   CHECK(device_handle_ == nullptr);
   err = uvc_open(device_, &device_handle_);
@@ -128,6 +154,18 @@ void UVCCameraDriver::openCamera() {
     return;
   }
   uvc_set_status_callback(device_handle_, &UVCCameraDriver::autoControlsCallbackWrapper, this);
+  CHECK_NOTNULL(device_handle_);
+  CHECK_NOTNULL(device_);
+  RCLCPP_INFO_STREAM(logger_, "open camera success");
+  is_camera_opened_ = true;
+}
+
+sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
+  if (camera_info_manager_ && camera_info_manager_->isCalibrated()) {
+    return camera_info_manager_->getCameraInfo();
+  } else {
+    return camera_info_;
+  }
 }
 
 void UVCCameraDriver::setVideoMode() {
@@ -136,14 +174,16 @@ void UVCCameraDriver::setVideoMode() {
   int height = config_.height;
   int fps = config_.fps;
   uvc_error_t err;
+  CHECK_NOTNULL(device_);
+  CHECK_NOTNULL(device_handle_);
   for (int i = 0; i < 5; i++) {
     err = uvc_get_stream_ctrl_format_size(device_handle_, &ctrl_, uvc_format, width, height, fps);
     if (err == UVC_SUCCESS) {
       break;
     }
   }
-  RCLCPP_INFO_STREAM(logger_, "set uvc mode" << width << "x" << height << "@" << fps << " format "
-                                             << magic_enum::enum_name(uvc_format));
+  RCLCPP_INFO_STREAM(logger_, "set uvc mode " << width << "x" << height << "@" << fps << " format "
+                                              << magic_enum::enum_name(uvc_format));
   if (err != UVC_SUCCESS) {
     RCLCPP_ERROR_STREAM(logger_, "set uvc ctrl error " << uvc_strerror(err));
     uvc_close(device_handle_);
@@ -263,20 +303,6 @@ void UVCCameraDriver::setupCameraControlService() {
                                   std::shared_ptr<SetBool::Response> response) {
         response->success = toggleUVCCamera(request, response);
       });
-  get_camera_info_cli_ = node_->create_client<GetCameraInfo>("get_camera_info");
-}
-
-sensor_msgs::msg::CameraInfo UVCCameraDriver::getCameraInfo() {
-  using namespace std::chrono_literals;
-  while (!get_camera_info_cli_->wait_for_service(1s)) {
-    CHECK(rclcpp::ok()) << "Interrupted while waiting for the service. Exiting.";
-  }
-  auto request = std::make_shared<GetCameraInfo::Request>();
-  auto future = get_camera_info_cli_->async_send_request(request);
-  const auto& result = future.get();
-  camera_info_ = result->info;
-  camera_info_->header.frame_id = config_.optical_frame_id;
-  return result->info;
 }
 
 enum uvc_frame_format UVCCameraDriver::UVCFrameFormatString(const std::string& format) {
@@ -351,9 +377,7 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     image.encoding = "bgr8";
     memcpy(&(image.data[0]), frame_buffer_->data, frame_buffer_->data_bytes);
   }
-  if (!camera_info_.has_value()) {
-    getCameraInfo();
-  }
+
   if (roi_.x != -1 && roi_.y != -1 && roi_.width != -1 && roi_.height != -1) {
     auto cv_image_ptr = cv_bridge::toCvCopy(image);
     auto cv_img = cv_image_ptr->image;
@@ -364,13 +388,18 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     image.header.frame_id = config_.optical_frame_id;
     image.header.stamp = node_->now();
   }
-  if (camera_info_.has_value()) {
-    camera_info_->header.stamp = node_->now();
-    camera_info_->height = image.height;
-    camera_info_->width = image.width;
-    camera_info_publisher_->publish(*camera_info_);
+  if (uvc_flip_) {
+    auto cv_image_ptr = cv_bridge::toCvCopy(image);
+    auto cv_img = cv_image_ptr->image;
+    cv::flip(cv_img, cv_img, 1);
+    cv_image_ptr->image = cv_img;
+    image = *(cv_image_ptr->toImageMsg());
   }
   image_publisher_->publish(image);
+  auto camera_info = getCameraInfo();
+  camera_info.header.stamp = image.header.stamp;
+  camera_info.header.frame_id = image.header.frame_id;
+  camera_info_publisher_->publish(camera_info);
 }
 
 void UVCCameraDriver::frameCallbackWrapper(uvc_frame_t* frame, void* ptr) {
@@ -494,7 +523,7 @@ bool UVCCameraDriver::setUVCWhiteBalanceCb(const std::shared_ptr<SetInt32::Reque
   }
   uvc_set_white_balance_temperature_auto(device_handle_, 0);  // 0: manual, 1: auto
   uint8_t data[4];
-  INT_TO_DW(request->data, data);
+  INT_TO_DW(request->data, data)
   int unit = uvc_get_processing_units(device_handle_)->bUnitID;
   int control = UVC_PU_WHITE_BALANCE_TEMPERATURE_CONTROL;
   int min_white_balance = UVCGetControl(control, unit, sizeof(int16_t), UVC_GET_MIN);

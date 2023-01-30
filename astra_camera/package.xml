@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>astra_camera</name>
-  <version>1.0.3</version>
+  <version>1.1.0</version>
   <description>TODO: Package description</description>
   <maintainer email="jian.dong@pobox.com">Joe Dong</maintainer>
   <license>TODO: License declaration</license>
@@ -15,6 +15,8 @@
   <depend>astra_camera_msgs</depend>
   <depend>builtin_interfaces</depend>
   <depend>class_loader</depend>
+  <depend>message_filters</depend>
+  <depend>camera_info_manager</depend>
   <depend>cv_bridge</depend>
   <depend>image_geometry</depend>
   <depend>image_publisher</depend>
