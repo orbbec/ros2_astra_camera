@@ -281,19 +281,20 @@ projection_matrix:
 - `econnection_delay`, The delay time for reopening the device in seconds. Some devices would take longer time to
   initialize, such as Astra mini, so reopening the device immediately would causes firmware crashes when hot plug.
 - `enable_point_cloud`, Whether to enable point cloud.
-- `enable_point_cloud_xyzrgb`, Whether to enable RGB point cloud.
-- `enable_d2c_filter`, Publish D2C overlay image.
+- `enable_colored_point_cloud`, Whether to enable RGB point cloud.
+- `point_cloud_qos`, `[color|depth|ir]_qos`,`[color|depth|ir]_camera_info_qos`, ROS2 Message QoS,
+  can be set to `SYSTEM_DEFAULT`, `DEFAULT`,`PARAMETER_EVENTS` ,`SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`,
+  corresponds to `rmw_qos_profile_system_default`, `rmw_qos_profile_default`, `rmw_qos_profile_parameter_events`
+ `rmw_qos_profile_services_default`,`rmw_qos_profile_parameters`, `SENSOR_DATA`,Case-insensitive.
+- `enable_d2c_viewer`, Publish D2C overlay image (For Test only).
 - `device_num`,The number of devices, You need to fill in the number of devices when you need multiple cameras.
-- `enable_reconfigure`, Whether to enable ROS [dynamic configuration](http://wiki.ros.org/dynamic_reconfigure) changes,
-  set to false `Astra.cfg` configuration will not take effect, recommended for testing purposes only, turn off when in
-  use. .
 - `color_width`， `color_height`， `color_fps`， color stream resolution and frame rate.
 - `ir_width`， `ir_height`， `ir_fps`，IR stream resolution and frame rate
 - `depth_width`， `depth_height`， `depth_fps` depth stream resolution and frame rate
 - `enable_color`， Whether to enable RGB camera, this parameter has no effect when the RGB camera is UVC protocol
 - `enable_depth` , Whether to enable depth camera
 - `enable_ir`, Whether to enable IR camera
-- `depth_align`, Enables hardware depth to color alignment, requires RGB point cloud to open
+- `depth_registration`, Enables hardware depth to color alignment, requires RGB point cloud to open
 - `depth_scale`, Depth image zoom scale, e.g. set to 2 means aligning depth 320x240 to RGB 640x480
 - `color_roi_x`， `color_roi_y`， `color_roi_width`， `color_roi_height`, Whether to crop RGB images, the default is -1,
   which is only used when the RGB resolution is greater than the depth resolution and needs to be aligned. For example,
