@@ -1,43 +1,21 @@
-# OpenNI2 SDK for ROS2
+# ros2_astra_camera
+A ROS2 driver for Orbbec 3D cameras
+## Install dependencies
 
-## Environment configuration
+### ROS2
 
-### ROS2 environment configuration
+● Please refer to the
+official [ROS 2 installation guide](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
 
-● Please refer to the official [ROS 2 installation guide](https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html)
+### other dependencies
 
-### Install additional dependencies
-
-● Install dependencies
-
-```bash
-sudo apt install libgflags-dev nlohmann-json3-dev \
-ros-galactic-image-transport ros-galactic-image-publisher
-```
-
-● Install glog
+● Install dependencies (be careful with your ROS distribution)
 
 ```bash
-wget -c https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz  -O glog-0.6.0.tar.gz
-tar -xzvf glog-0.6.0.tar.gz
-cd glog-0.6.0
-mkdir build && cd build
-cmake .. && make -j4
-sudo make install
-sudo ldconfig  # Refreshing the link library
-```
+ Assuming you have sourced the ros environment, same below
+sudo apt install libgflags-dev  ros-$ROS_DISTRO-image-geometry ros-$ROS_DISTRO-camera-info-manager\
+ros-$ROS_DISTRO-image-transport ros-$ROS_DISTRO-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev
 
-● Install magic_enum
-
-```bash
-wget -c https://github.com/Neargye/magic_enum/archive/refs/tags/v0.8.0.tar.gz -O  magic_enum-0.8.0.tar.gz
-
-tar -xzvf magic_enum-0.8.0.tar.gz
-cd magic_enum-0.8.0
-mkdir build && cd build
-cmake .. && make -j4
-sudo make install
-sudo ldconfig # Refreshing the link library
 ```
 
 ● Install libuvc
@@ -85,7 +63,7 @@ Starting the camera
 ```bash
 source /opt/ros/galactic/setup.bash 
 source ./install/setup.bash 
-ros2 launch astra_camera astra_mini.launch.py
+ros2 launch astra_camera astra.launch.xml
 ```
 
 ● In terminal 2
@@ -93,7 +71,7 @@ ros2 launch astra_camera astra_mini.launch.py
 ```bash
 source /opt/ros/galactic/setup.bash 
 source ./install/setup.bash 
-rviz2 -d src/ros2_astra_camera/astra_camera/rviz/pointcloud.rviz
+rviz2
 ```
 
 ● List topics / services/ parameters (open a new terminal)
@@ -101,15 +79,11 @@ rviz2 -d src/ros2_astra_camera/astra_camera/rviz/pointcloud.rviz
 ```bash
 source /opt/ros/galactic/setup.bash 
 ros2 topic list
-ros2 service list
+ros2 service list 
 ros2 param list
 ```
+Select the topic you want to display
 
-● Check extrinsic parameters for depth to color
-
-```bash
- ros2 topic echo --qos-durability=transient_local /camera/extrinsic/depth_to_color  --qos-profile=services_default
-```
 
 ● Get camera parameters
 
@@ -117,7 +91,8 @@ ros2 param list
 ros2 service call /camera/get_camera_info astra_camera_msgs/srv/GetCameraInfo '{}'
 ```
 
-● Check camera parameters, please refer to the ROS documentation for the meaning of the specific fields of the camera parameters  [camera info](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/CameraInfo.html)
+● Check camera parameters, please refer to the ROS documentation for the meaning of the specific fields of the camera
+parameters  [camera info](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/CameraInfo.html)
 
 ```bash
 ros2 topic echo /camera/depth/camera_info
@@ -221,172 +196,127 @@ ros2 service call /camera/toggle_uvc_camera std_srvs/srv/SetBool "{data : true}"
 ros2 run astra_camera list_devices_node
 ```
 
-● In the multi-camera launch file, please change to the current connected cameras' serial number
+● Set the parameter device_num to the number of cameras
 
-● Launch
+● Go to the `ros2_astra_camera/launch/multi_xxx.launch`   and change the serial number. Currently, different cameras can
+only be distinguished by the serial number,
 
-```bash
-ros2 launch astra_camera multi_astra_mini.launch.py
+```xml
+<launch>
+    <!-- unique camera name-->
+    <arg name="camera_name" default="camera"/>
+    <!-- Hardware depth registration -->
+    <arg name="3d_sensor" default="astra"/>
+    <!-- stereo_s_u3, astrapro, astra -->
+    <arg name="camera1_prefix" default="01"/>
+    <arg name="camera2_prefix" default="02"/>
+    <arg name="camera1_serila_number" default="ADA611300CE"/>
+    <arg name="camera2_serila_number" default="sn123456789"/>
+    <arg name="device_num" default="2"/>
+    <node name="camera" pkg="astra_camera" type="cleanup_shm_node" output="screen"/>
+    <include file="$(find-pkg-share astra_camera)/launch/$(arg 3d_sensor).launch.xml">
+        <arg name="camera_name" value="$(var camera_name)_$(var camera1_prefix)"/>
+        <arg name="serial_number" value="$(var camera1_serila_number)"/>
+        <arg name="device_num" value="$(var device_num)"/>
+    </include>
+
+    <include file="$(ind-pkg-share astra_camera)/launch/$(var 3d_sensor).launch.xml">
+        <arg name="camera_name" value="$(var camera_name)_$(var camera2_prefix)"/>
+        <arg name="serial_number" value="$(var camera2_serila_number)"/>
+        <arg name="device_num" value="$(var device_num)"/>
+    </include>
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="camera_tf"
+          args="0 0 0 0 0 0 camera01_link camera02_link"/>
+</launch>
 ```
-
-## Configuration file description
-
+* astra camera will use semaphore to do process synchronization,
+if the camera start fails, the semaphore file may be left in the `/dev/shm`,
+causing the next start to be stuck.
+Before launch, please run
 ```bash
-# Parameter setting template
-camera_name : "camera" # # Camera name (unique)
-color_width: 640 # RGB Wide
-color_height: 480 # RGB High
-color_fps: 30 # RGB frame rate
-enable_color: true #  RGB switches
-
-# IR camera width/height/FPS
-ir_width: 640 
-ir_height: 480
-ir_fps: 30
-enable_ir: false
-# depth camera width/height/FPS
-depth_width: 640
-depth_height: 480
-depth_fps: 30
-enable_depth: true
-
-# open depth to color alignment （hardware registration）
-depth_align: false
-# Device serial number, required for multiple cameras
-serial_number: ""
-number_of_devices: 1
-# UVC camera , only for dabai , dabai DCW
-uvc_camera.enable: false
-uvc_camera.format: "mjpeg"
-uvc_camera.vid: 0x0
-uvc_camera.pid: 0x0
-# Retry count when opening camera failed
-uvc_camera.retry_count: 100
-# Different resolution alignment requires clipping and zooming, so ROI may need to be set
-color_roi.x : -1 # Top left x
-color_roi.y : -1 # Top left x
-color_roi.width: -1
-color_roi.height: -1
-depth_roi.x : -1
-depth_roi.y : -1
-depth_roi.width: -1
-depth_roi.height: -1
-# depth scales 
-depth_scale : 1
-publish_tf: true
-tf_publish_rate: 10.0
-reconnect_timeout: 6.0
+ros2 run astra_camera cleanup_shm_node 
 ```
-
-● dabai Depth 640x400 aligned to color 640x480, the color needs to be cropped
-
+to clean up `/dev/shm/`.
+* Launch
 ```bash
-color_roi.x : 0
-color_roi.y : 0
-color_roi.width: 640
-color_roi.height: 400
+ros2 launch astra_camera multi_astra.launch.xml
 ```
-
-● astra_mini Depth 320x240 aligned to color 640x480 requires depth scale change
-
-```bash
-depth_scale : 2
+## Use calibration camera parameter
+* Set camera info url, Go to `xxx.launch`
+```xml
+<launch>
+    <!--...-->
+    <arg name="ir_info_url" default="file:///you_ir_camera_calib_path/depth_camera.yaml"/>
+    <arg name="color_info_url" default="file:///you_depth_camera_calib_path/rgb_camera.yaml"/>
+    <!--...-->
+</launch>
 ```
+* Calibration file should be like
+> Be careful the camera name The color camera is rgb_camera, the depth/IR camera name is ir_camera
+```yaml
+image_width: 640
+image_height: 480
+# The camera name is fixed. The color camera is rgb_camera, the depth/IR camera name is ir_camera
+camera_name: rgb_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [517.301, 0, 326.785, 0, 519.291, 244.563, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.41527, 0.31874, -0.00197, 0.00071, 0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [0.999973, 0.00612598, -0.00406652, -0.00610201, 0.999964, 0.00588094, 0.0041024, -0.00585596, 0.999974 ]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [517.301, 0, 326.785, -25.3167, 0, 519.291, 244.563, 0.282065, 0, 0, 1, 0.0777703]
 
-**● After changing the configuration file, you need to run `colcon build` to update it under `install`, because the ROS2 environment is found under `install`, not in the source code.**
-**● Alignment must be turned on to produce colorized point clouds**
-
-## Self-booting
-
-For the start-up script, edit `ros2_astra_camera_start.sh` and add the following
-
-```bash
-ROS_DISTRO=galactic
-export ROS_DOMAIN_ID=42
-export ROS_LOCALHOST_ONLY=1
-export CYCLONEDDS_URI=file:///etc/cyclonedds/config.xml # The cyclonedds configuration file, which can be left out if not available
-export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp # Optional: rmw_cyclonedds_cpp / rmw_fastrtps_cpp
-
-ENVFILE=/home/orbbec/ros2_ws/install/setup.bash #  The environment of ros2_astra_camera
-
-if [ -f ${ENVFILE} ] ; then
-  echo "Loading astra camera env..."
-  source /opt/ros/${ROS_DISTRO}/setup.bash
-  source ${ENVFILE}
-  ros2 launch astra_camera dabai_dcw.launch.py # Dabai DCW as an example
-else
-  echo "ros astra camera ws not found"
-fi
 ```
-
-For the systemd script, edit `ros2_astra_camera.service` and add the following
-
-```bash
-[Unit]
-Description=orbbec astra device ROS wrapper
-After=local-fs.target
-ConditionPathExists=/home/orbbec/ros2_ws/install/setup.bash # The environment of ros2_astra_camera
-
-[Service]
-Type=simple
-User=toosimple
-EnvironmentFile=
-ExecStart=/home/orbbec/ros2_ws/ros2_astra_camera_start.sh # Where to put the startup script
-ExecStop=/bin/kill ${MAINPID}
-Restart=on-failure
-StartLimitInterval=60
-StartLimitBurst=3
-KillMode=mixed
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Copy ros2_astra_camera.service to the system
-
-```bash
-sudo cp ros2_astra_camera.service /etc/systemd/system
-```
-
-Enable ros2_astra_camera.service
-
-```bash
-sudo systemctl enable ros2_astra_camera.service
-```
-
-Manual start
-
-```bash
-sudo systemctl start ros2_astra_camera.service
-```
-
-Check status
-
-```bash
-sudo systemctl status ros2_astra_camera.service
-```
-
-View log
-
-```bash
-journalctl -u ros2_astra_camera.service
-```
-
-Disable ros2_astra_camera.service
-
-```bash
-sudo systemctl disable ros2_astra_camera.service
-```
-
-Delete ros2_astra_camera.service (**please be careful when entering commands**)
-
-```bash
-sudo rm /etc/systemd/system/ros2_astra_camera.service
-```
-
+## Launch parameters
+- `econnection_delay`, The delay time for reopening the device in seconds. Some devices would take longer time to
+  initialize, such as Astra mini, so reopening the device immediately would causes firmware crashes when hot plug.
+- `enable_point_cloud`, Whether to enable point cloud.
+- `enable_point_cloud_xyzrgb`, Whether to enable RGB point cloud.
+- `enable_d2c_filter`, Publish D2C overlay image.
+- `device_num`,The number of devices, You need to fill in the number of devices when you need multiple cameras.
+- `enable_reconfigure`, Whether to enable ROS [dynamic configuration](http://wiki.ros.org/dynamic_reconfigure) changes,
+  set to false `Astra.cfg` configuration will not take effect, recommended for testing purposes only, turn off when in
+  use. .
+- `color_width`， `color_height`， `color_fps`， color stream resolution and frame rate.
+- `ir_width`， `ir_height`， `ir_fps`，IR stream resolution and frame rate
+- `depth_width`， `depth_height`， `depth_fps` depth stream resolution and frame rate
+- `enable_color`， Whether to enable RGB camera, this parameter has no effect when the RGB camera is UVC protocol
+- `enable_depth` , Whether to enable depth camera
+- `enable_ir`, Whether to enable IR camera
+- `depth_align`, Enables hardware depth to color alignment, requires RGB point cloud to open
+- `depth_scale`, Depth image zoom scale, e.g. set to 2 means aligning depth 320x240 to RGB 640x480
+- `color_roi_x`， `color_roi_y`， `color_roi_width`， `color_roi_height`, Whether to crop RGB images, the default is -1,
+  which is only used when the RGB resolution is greater than the depth resolution and needs to be aligned. For example,
+  if you need to align the depth 640x400 to RGB 640x480, you need to set color_roi_x: 0, color_roi_y: 0,
+  color_roi_width: 640, color_roi_height: 400. roi_height: 400, which will crop the top 400 pixels of the RGB with a
+  corresponding depth ROI.
+- `color_depth_synchronization`，Enable synchronization of RGB with depth
+- `use_uvc_camera`，if the RGB camera is UVC protocol, setting as true, UVC is the protocol that currently includes
+  dabai, dabai_dcw etc.
+- `uvc_product_id`，pid of UVC camera
+- `uvc_camera_format`，Image format for uvc camera
+- `uvc_retry_count` sometimes the UVC protocol camera does not reconnect successfully when hot-plug, requiring many
+  times to retry.
+- `enable_publish_extrinsic` Enable publish camera extrinsic.
+- `oni_log_level`, Log levels for OpenNI verbose/ info /warning/ error /none
+- `oni_log_to_console`, Whether to output OpenNI logs to the console
+- `oni_log_to_file`, Whether to output OpenNI logs to a file, by default it will save in Log folder under the path of
+  the currently running program
 ## DDS Tuning
 
-The default DDS settings (Galactic) may not be efficient for data transmission. Different DDS settings will have different performance. Here we take CycloneDDS as an example. For detailed information, please refer to[ROS DDS Tuning](https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html)。
+The default DDS settings (Galactic) may not be efficient for data transmission. Different DDS settings will have
+different performance. Here we take CycloneDDS as an example. For detailed information, please refer
+to[ROS DDS Tuning](https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html)。
 
 ● Edit cyclonedds configuration file
 
@@ -396,10 +326,10 @@ sudo gedit /etc/cyclonedds/config.xml
 
 Add
 
-```bash
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://cdds.io/config
-https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
+<CycloneDDS xmlns="https://cdds.io/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="https://cdds.io/confighttps://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclonedds.xsd">
     <Domain id="any">
         <General>
             <NetworkInterfaceAddress>lo</NetworkInterfaceAddress>
@@ -410,10 +340,9 @@ https://raw.githubusercontent.com/eclipse-cyclonedds/cyclonedds/master/etc/cyclo
         </Internal>
         <Discovery>
             <ParticipantIndex>auto</ParticipantIndex>
-            <MaxAutoParticipantIndex>
-                30</MaxAutoParticipantIndex>
+            <MaxAutoParticipantIndex>30</MaxAutoParticipantIndex>
             <Peers>
-                <Peer address="localhost" />
+                <Peer address="localhost"/>
             </Peers>
         </Discovery>
     </Domain>
@@ -428,7 +357,8 @@ export ROS_LOCALHOST_ONLY=1
 export CYCLONEDDS_URI=file:///etc/cyclonedds/config.xml
 ```
 
-Tip：to understand why the maximum ROS_DOMAIN_ID is 232, please visit [The ROS DOMAIN ID](https://docs.ros.org/en/humble/Concepts/About-Domain-ID.html)
+Tip：to understand why the maximum ROS_DOMAIN_ID is 232, please
+visit [The ROS DOMAIN ID](https://docs.ros.org/en/humble/Concepts/About-Domain-ID.html)
 ● Increase UDP receive buffer size
 Edit
 
@@ -447,11 +377,29 @@ net.core.rmem_default=2147483647
 
 ● No point cloud or image displayed on Rviz2
 
-- The default QoS for outgoing messages is sense_data, i.e. Relaiblity Policy = Best Effort, please check if the Relaiblity Policy is set to Best Effort on Rviz2, and also check if there is any problem with the QoS setting of the message via `ros2 topic info -v /xxx/topic`
+- The default QoS for outgoing messages is sense_data, i.e. Relaiblity Policy = Best Effort, please check if the
+  Relaiblity Policy is set to Best Effort on Rviz2, and also check if there is any problem with the QoS setting of the
+  message via `ros2 topic info -v /xxx/topic`
 
 ● No picture from multiple cameras
 
-- It is possible that the power supply is insufficient, do not connect all cameras to the same hub, and a powered hub is recommended
+- It is possible that the power supply is insufficient, do not connect all cameras to the same hub, and a powered hub is
+  recommended
 
 - It is also possible that the resolution is too high, try turning it lower
 - If the color camera is an UVC camera, the serial number of the UVC may not be set
+
+## License
+
+Copyright 2022 Orbbec Ltd.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this project except in compliance with
+the License. You may obtain a copy of the License at
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "
+AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+language governing permissions and limitations under the License.
+
+*Other names and brands may be claimed as the property of others*
