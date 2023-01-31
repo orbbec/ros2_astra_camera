@@ -1,5 +1,7 @@
 # ros2_astra_camera
+
 A ROS2 driver for Orbbec 3D cameras
+
 ## Install dependencies
 
 ### ROS2
@@ -82,8 +84,8 @@ ros2 topic list
 ros2 service list 
 ros2 param list
 ```
-Select the topic you want to display
 
+Select the topic you want to display
 
 ● Get camera parameters
 
@@ -229,20 +231,28 @@ only be distinguished by the serial number,
           args="0 0 0 0 0 0 camera01_link camera02_link"/>
 </launch>
 ```
+
 * astra camera will use semaphore to do process synchronization,
 if the camera start fails, the semaphore file may be left in the `/dev/shm`,
 causing the next start to be stuck.
 Before launch, please run
+
 ```bash
 ros2 run astra_camera cleanup_shm_node 
 ```
+
 to clean up `/dev/shm/`.
+
 * Launch
+
 ```bash
 ros2 launch astra_camera multi_astra.launch.xml
 ```
+
 ## Use calibration camera parameter
+
 * Set camera info url, Go to `xxx.launch`
+
 ```xml
 <launch>
     <!--...-->
@@ -251,8 +261,11 @@ ros2 launch astra_camera multi_astra.launch.xml
     <!--...-->
 </launch>
 ```
+
 * Calibration file should be like
+
 > Be careful the camera name The color camera is rgb_camera, the depth/IR camera name is ir_camera
+
 ```yaml
 image_width: 640
 image_height: 480
@@ -277,42 +290,46 @@ projection_matrix:
   data: [517.301, 0, 326.785, -25.3167, 0, 519.291, 244.563, 0.282065, 0, 0, 1, 0.0777703]
 
 ```
+
 ## Launch parameters
-- `econnection_delay`, The delay time for reopening the device in seconds. Some devices would take longer time to
+
+* `connection_delay`, The delay time for reopening the device in seconds. Some devices would take longer time to
   initialize, such as Astra mini, so reopening the device immediately would causes firmware crashes when hot plug.
-- `enable_point_cloud`, Whether to enable point cloud.
-- `enable_colored_point_cloud`, Whether to enable RGB point cloud.
-- `point_cloud_qos`, `[color|depth|ir]_qos`,`[color|depth|ir]_camera_info_qos`, ROS2 Message QoS,
+
+* `enable_point_cloud`, Whether to enable point cloud.
+* `enable_colored_point_cloud`, Whether to enable RGB point cloud.
+* `point_cloud_qos`, `[color|depth|ir]_qos`,`[color|depth|ir]_camera_info_qos`, ROS2 Message QoS,
   can be set to `SYSTEM_DEFAULT`, `DEFAULT`,`PARAMETER_EVENTS` ,`SERVICES_DEFAULT`, `PARAMETERS`, `SENSOR_DATA`,
   corresponds to `rmw_qos_profile_system_default`, `rmw_qos_profile_default`, `rmw_qos_profile_parameter_events`
  `rmw_qos_profile_services_default`,`rmw_qos_profile_parameters`, `SENSOR_DATA`,Case-insensitive.
-- `enable_d2c_viewer`, Publish D2C overlay image (For Test only).
-- `device_num`,The number of devices, You need to fill in the number of devices when you need multiple cameras.
-- `color_width`， `color_height`， `color_fps`， color stream resolution and frame rate.
-- `ir_width`， `ir_height`， `ir_fps`，IR stream resolution and frame rate
-- `depth_width`， `depth_height`， `depth_fps` depth stream resolution and frame rate
-- `enable_color`， Whether to enable RGB camera, this parameter has no effect when the RGB camera is UVC protocol
-- `enable_depth` , Whether to enable depth camera
-- `enable_ir`, Whether to enable IR camera
-- `depth_registration`, Enables hardware depth to color alignment, requires RGB point cloud to open
-- `depth_scale`, Depth image zoom scale, e.g. set to 2 means aligning depth 320x240 to RGB 640x480
-- `color_roi_x`， `color_roi_y`， `color_roi_width`， `color_roi_height`, Whether to crop RGB images, the default is -1,
+* `enable_d2c_viewer`, Publish D2C overlay image (For Test only).
+* `device_num`,The number of devices, You need to fill in the number of devices when you need multiple cameras.
+* `color_width`， `color_height`， `color_fps`， color stream resolution and frame rate.
+* `ir_width`， `ir_height`， `ir_fps`，IR stream resolution and frame rate
+* `depth_width`， `depth_height`， `depth_fps` depth stream resolution and frame rate
+* `enable_color`， Whether to enable RGB camera, this parameter has no effect when the RGB camera is UVC protocol
+* `enable_depth` , Whether to enable depth camera
+* `enable_ir`, Whether to enable IR camera
+* `depth_registration`, Enables hardware depth to color alignment, requires RGB point cloud to open
+* `depth_scale`, Depth image zoom scale, e.g. set to 2 means aligning depth 320x240 to RGB 640x480
+* `color_roi_x`， `color_roi_y`， `color_roi_width`， `color_roi_height`, Whether to crop RGB images, the default is -1,
   which is only used when the RGB resolution is greater than the depth resolution and needs to be aligned. For example,
   if you need to align the depth 640x400 to RGB 640x480, you need to set color_roi_x: 0, color_roi_y: 0,
   color_roi_width: 640, color_roi_height: 400. roi_height: 400, which will crop the top 400 pixels of the RGB with a
   corresponding depth ROI.
-- `color_depth_synchronization`，Enable synchronization of RGB with depth
-- `use_uvc_camera`，if the RGB camera is UVC protocol, setting as true, UVC is the protocol that currently includes
+* `color_depth_synchronization`，Enable synchronization of RGB with depth
+* `use_uvc_camera`，if the RGB camera is UVC protocol, setting as true, UVC is the protocol that currently includes
   dabai, dabai_dcw etc.
-- `uvc_product_id`，pid of UVC camera
-- `uvc_camera_format`，Image format for uvc camera
-- `uvc_retry_count` sometimes the UVC protocol camera does not reconnect successfully when hot-plug, requiring many
+* `uvc_product_id`，pid of UVC camera
+* `uvc_camera_format`，Image format for uvc camera
+* `uvc_retry_count` sometimes the UVC protocol camera does not reconnect successfully when hot-plug, requiring many
   times to retry.
-- `enable_publish_extrinsic` Enable publish camera extrinsic.
-- `oni_log_level`, Log levels for OpenNI verbose/ info /warning/ error /none
-- `oni_log_to_console`, Whether to output OpenNI logs to the console
-- `oni_log_to_file`, Whether to output OpenNI logs to a file, by default it will save in Log folder under the path of
+* `enable_publish_extrinsic` Enable publish camera extrinsic.
+* `oni_log_level`, Log levels for OpenNI verbose/ info /warning/ error /none
+* `oni_log_to_console`, Whether to output OpenNI logs to the console
+* `oni_log_to_file`, Whether to output OpenNI logs to a file, by default it will save in Log folder under the path of
   the currently running program
+
 ## DDS Tuning
 
 The default DDS settings (Galactic) may not be efficient for data transmission. Different DDS settings will have
@@ -378,17 +395,17 @@ net.core.rmem_default=2147483647
 
 ● No point cloud or image displayed on Rviz2
 
-- The default QoS for outgoing messages is sense_data, i.e. Relaiblity Policy = Best Effort, please check if the
+* The default QoS for outgoing messages is sense_data, i.e. Relaiblity Policy = Best Effort, please check if the
   Relaiblity Policy is set to Best Effort on Rviz2, and also check if there is any problem with the QoS setting of the
   message via `ros2 topic info -v /xxx/topic`
 
 ● No picture from multiple cameras
 
-- It is possible that the power supply is insufficient, do not connect all cameras to the same hub, and a powered hub is
+* It is possible that the power supply is insufficient, do not connect all cameras to the same hub, and a powered hub is
   recommended
 
-- It is also possible that the resolution is too high, try turning it lower
-- If the color camera is an UVC camera, the serial number of the UVC may not be set
+* It is also possible that the resolution is too high, try turning it lower
+* If the color camera is an UVC camera, the serial number of the UVC may not be set
 
 ## License
 
@@ -403,4 +420,4 @@ Unless required by applicable law or agreed to in writing, software distributed 
 AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
 language governing permissions and limitations under the License.
 
-*Other names and brands may be claimed as the property of others*
+**Other names and brands may be claimed as the property of others**
