@@ -100,19 +100,19 @@ sensor_msgs::msg::CameraInfo OBCameraNode::OBCameraParamsToCameraInfo(
   camera_info.k[8] = 1.0;
 
   camera_info.r.fill(0.0);
-  for (int i = 0; i < 9; i++) {
-    camera_info.r[i] = params.r2l_r[i];
-  }
+  camera_info.r[0] = 1.0;
+  camera_info.r[4] = 1.0;
+  camera_info.r[8] = 1.0;
 
   camera_info.p.fill(0.0);
   camera_info.p[0] = camera_info.k[0];
   camera_info.p[2] = camera_info.k[2];
-  camera_info.p[3] = params.r2l_t[0];
+  camera_info.p[3] = 0.0;
   camera_info.p[5] = camera_info.k[4];
   camera_info.p[6] = camera_info.k[5];
-  camera_info.p[7] = params.r2l_t[1];
+  camera_info.p[7] = 0.0;
   camera_info.p[10] = 1.0;
-  camera_info.p[11] = params.r2l_t[2];
+  camera_info.p[11] = 0.0;
   return camera_info;
 }
 
