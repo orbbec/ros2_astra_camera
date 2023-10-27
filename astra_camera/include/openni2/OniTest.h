@@ -18,40 +18,23 @@
 *  limitations under the License.                                            *
 *                                                                            *
 *****************************************************************************/
-#ifndef ONIPLATFORMMACOSX_H
-#define ONIPLATFORMMACOSX_H
+#ifndef ONITEST_H
+#define ONITEST_H
 
-// Start with Linux-x86, and override what's different
-#include "../Linux-x86/OniPlatformLinux-x86.h"
+#define TEST_DEVICE_NAME "Test" // use with device.open() to create a test device
 
-#include <sys/time.h>
+/**
+* Additional commands for Test device streams
+*/
+enum
+{
+	TEST_COMMAND_ISSUE_FRAME = 0xFFFF0001, // TestCommandIssueFrame
+};
 
-#undef ONI_PLATFORM
-#undef ONI_PLATFORM_STRING
-#define ONI_PLATFORM ONI_PLATFORM_MACOSX
-#define ONI_PLATFORM_STRING "MacOSX"
+typedef struct TestCommandIssueFrame
+{
+	uint64_t timestamp;
+	void* data;
+} TestCommandIssueFrame;
 
-#include "TargetConditionals.h"
-#if (TARGET_IPHONE_SIMULATOR == 1) || (TARGET_OS_IPHONE == 1)
-    #define ONI_PLATFORM_IOS
-
-    #undef ONI_PLATFORM_STRING
-    #define ONI_PLATFORM_STRING "iOS"
-#elif TARGET_OS_MAC
-    #ifdef XN_XCODE_BUILD
-        #define ONI_PLATFORM_MACOSX_XCODE
-
-        #undef ONI_PLATFORM_STRING
-        #define ONI_PLATFORM_STRING "MacOSX-Xcode"
-    #endif
-#endif
-
-#define ONI_PLATFORM_HAS_NO_TIMED_OPS
-#define ONI_PLATFORM_HAS_NO_CLOCK_GETTIME
-#define ONI_PLATFORM_HAS_NO_SCHED_PARAM
-#define ONI_PLATFORM_HAS_BUILTIN_SEMUN
-
-#undef ONI_THREAD_STATIC
-#define ONI_THREAD_STATIC 
- 
-#endif // ONIPLATFORMMACOSX_H
+#endif // ONITEST_H

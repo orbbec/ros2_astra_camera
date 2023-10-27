@@ -18,40 +18,56 @@
 *  limitations under the License.                                            *
 *                                                                            *
 *****************************************************************************/
-#ifndef ONIPLATFORMMACOSX_H
-#define ONIPLATFORMMACOSX_H
+#ifndef ONIPLATFORM_H
+#define ONIPLATFORM_H
 
-// Start with Linux-x86, and override what's different
-#include "../Linux-x86/OniPlatformLinux-x86.h"
 
-#include <sys/time.h>
+// Supported platforms
+#define ONI_PLATFORM_WIN32 1
+#define ONI_PLATFORM_LINUX_X86 2
+#define ONI_PLATFORM_LINUX_ARM 3
+#define ONI_PLATFORM_MACOSX 4
+#define ONI_PLATFORM_ANDROID_ARM 5
 
-#undef ONI_PLATFORM
-#undef ONI_PLATFORM_STRING
-#define ONI_PLATFORM ONI_PLATFORM_MACOSX
-#define ONI_PLATFORM_STRING "MacOSX"
-
-#include "TargetConditionals.h"
-#if (TARGET_IPHONE_SIMULATOR == 1) || (TARGET_OS_IPHONE == 1)
-    #define ONI_PLATFORM_IOS
-
-    #undef ONI_PLATFORM_STRING
-    #define ONI_PLATFORM_STRING "iOS"
-#elif TARGET_OS_MAC
-    #ifdef XN_XCODE_BUILD
-        #define ONI_PLATFORM_MACOSX_XCODE
-
-        #undef ONI_PLATFORM_STRING
-        #define ONI_PLATFORM_STRING "MacOSX-Xcode"
-    #endif
+#if (defined _WIN32)
+#	ifndef RC_INVOKED
+#		if _MSC_VER < 1300
+#			error OpenNI Platform Abstraction Layer - Win32 - Microsoft Visual Studio version below 2003 (7.0) are not supported!
+#		endif
+#	endif
+#	include "Win32/OniPlatformWin32.h"
+#elif defined (ANDROID) && (__arm__|| __aarch64__)
+#	include "Android-Arm/OniPlatformAndroid-Arm.h"
+#elif (__linux__ && (__i386__ || __x86_64__))
+#	include "Linux-x86/OniPlatformLinux-x86.h"
+#elif (__linux__ && (__arm__ || __aarch64__))
+#	include "Linux-Arm/OniPlatformLinux-Arm.h"
+#elif _ARC
+#	include "ARC/OniPlaformARC.h"
+#elif (__APPLE__)
+#	include "MacOSX/OniPlatformMacOSX.h"
+#else
+#	error Xiron Platform Abstraction Layer - Unsupported Platform!
 #endif
 
-#define ONI_PLATFORM_HAS_NO_TIMED_OPS
-#define ONI_PLATFORM_HAS_NO_CLOCK_GETTIME
-#define ONI_PLATFORM_HAS_NO_SCHED_PARAM
-#define ONI_PLATFORM_HAS_BUILTIN_SEMUN
+#ifdef __cplusplus
+#	define ONI_C extern "C"
+#	define ONI_C_API_EXPORT ONI_C ONI_API_EXPORT
+#	define ONI_C_API_IMPORT ONI_C ONI_API_IMPORT
+#	define ONI_CPP_API_EXPORT ONI_API_EXPORT
+#	define ONI_CPP_API_IMPORT ONI_API_IMPORT
+#else // __cplusplus
+#	define ONI_C_API_EXPORT ONI_API_EXPORT
+#	define ONI_C_API_IMPORT ONI_API_IMPORT
+#endif  // __cplusplus
 
-#undef ONI_THREAD_STATIC
-#define ONI_THREAD_STATIC 
- 
-#endif // ONIPLATFORMMACOSX_H
+#ifdef OPENNI2_EXPORT
+#	define ONI_C_API ONI_C_API_EXPORT
+#	define ONI_CPP_API ONI_CPP_API_EXPORT
+#else // OPENNI2_EXPORT
+#	define ONI_C_API ONI_C_API_IMPORT
+#	define ONI_CPP_API ONI_CPP_API_IMPORT
+#endif // OPENNI2_EXPORT
+
+
+#endif // ONIPLATFORM_H

@@ -18,40 +18,32 @@
 *  limitations under the License.                                            *
 *                                                                            *
 *****************************************************************************/
-#ifndef ONIPLATFORMMACOSX_H
-#define ONIPLATFORMMACOSX_H
+#ifndef ONIVERSION_H
+#define ONIVERSION_H
 
-// Start with Linux-x86, and override what's different
-#include "../Linux-x86/OniPlatformLinux-x86.h"
+#include "OniPlatform.h"
 
-#include <sys/time.h>
+#define ONI_VERSION_MAJOR 2
+#define ONI_VERSION_MINOR 3
+#define ONI_VERSION_MAINTENANCE 0
+#define ONI_VERSION_BUILD 85
 
-#undef ONI_PLATFORM
-#undef ONI_PLATFORM_STRING
-#define ONI_PLATFORM ONI_PLATFORM_MACOSX
-#define ONI_PLATFORM_STRING "MacOSX"
+/** OpenNI version (in brief string format): "Major.Minor.Maintenance (Build)" */ 
+#define ONI_BRIEF_VERSION_STRING \
+	"Standard "\
+	ONI_STRINGIFY(ONI_VERSION_MAJOR) "." \
+	ONI_STRINGIFY(ONI_VERSION_MINOR) "." \
+	ONI_STRINGIFY(ONI_VERSION_MAINTENANCE) \
+	" (Build " ONI_STRINGIFY(ONI_VERSION_BUILD) ")"
 
-#include "TargetConditionals.h"
-#if (TARGET_IPHONE_SIMULATOR == 1) || (TARGET_OS_IPHONE == 1)
-    #define ONI_PLATFORM_IOS
+/** OpenNI version (in numeric format): (OpenNI major version * 100000000 + OpenNI minor version * 1000000 + OpenNI maintenance version * 10000 + OpenNI build version). */
+#define ONI_VERSION (ONI_VERSION_MAJOR*100000000 + ONI_VERSION_MINOR*1000000 + ONI_VERSION_MAINTENANCE*10000 + ONI_VERSION_BUILD)
+#define ONI_CREATE_API_VERSION(major, minor) ((major)*1000 + (minor))
+#define ONI_API_VERSION ONI_CREATE_API_VERSION(ONI_VERSION_MAJOR, ONI_VERSION_MINOR)
 
-    #undef ONI_PLATFORM_STRING
-    #define ONI_PLATFORM_STRING "iOS"
-#elif TARGET_OS_MAC
-    #ifdef XN_XCODE_BUILD
-        #define ONI_PLATFORM_MACOSX_XCODE
+/** OpenNI version (in string format): "Major.Minor.Maintenance.Build-Platform (MMM DD YYYY HH:MM:SS)". */ 
+#define ONI_VERSION_STRING \
+	ONI_BRIEF_VERSION_STRING  "-" \
+	ONI_PLATFORM_STRING " (" ONI_TIMESTAMP ")"
 
-        #undef ONI_PLATFORM_STRING
-        #define ONI_PLATFORM_STRING "MacOSX-Xcode"
-    #endif
-#endif
-
-#define ONI_PLATFORM_HAS_NO_TIMED_OPS
-#define ONI_PLATFORM_HAS_NO_CLOCK_GETTIME
-#define ONI_PLATFORM_HAS_NO_SCHED_PARAM
-#define ONI_PLATFORM_HAS_BUILTIN_SEMUN
-
-#undef ONI_THREAD_STATIC
-#define ONI_THREAD_STATIC 
- 
-#endif // ONIPLATFORMMACOSX_H
+#endif // ONIVERSION_H
