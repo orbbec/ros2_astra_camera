@@ -87,8 +87,7 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters>
     camera_info_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(
         node_, "rgb_camera", color_info_url_);
   }
-  image_publisher_ = image_transport::create_publisher(node_, "color/image_raw",
-      rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_qos_profile_), color_qos_profile_));
+  image_publisher_ = image_transport::create_publisher(node_, "color/image_raw", color_qos_profile_);
   camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
       "color/camera_info", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_info_qos_profile_),
                                        color_info_qos_profile_));
