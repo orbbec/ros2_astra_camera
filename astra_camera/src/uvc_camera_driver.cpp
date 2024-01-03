@@ -87,8 +87,7 @@ UVCCameraDriver::UVCCameraDriver(rclcpp::Node* node, std::shared_ptr<Parameters>
     camera_info_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(
         node_, "rgb_camera", color_info_url_);
   }
-  image_publisher_ = node_->create_publisher<sensor_msgs::msg::Image>(
-      "color/image_raw",
+  image_publisher_ = image_transport::create_publisher(node_, "color/image_raw",
       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_qos_profile_), color_qos_profile_));
   camera_info_publisher_ = node_->create_publisher<sensor_msgs::msg::CameraInfo>(
       "color/camera_info", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(color_info_qos_profile_),
@@ -395,7 +394,7 @@ void UVCCameraDriver::frameCallback(uvc_frame_t* frame) {
     cv_image_ptr->image = cv_img;
     image = *(cv_image_ptr->toImageMsg());
   }
-  image_publisher_->publish(image);
+  image_publisher_.publish(image);
   auto camera_info = getCameraInfo();
   camera_info.header.stamp = image.header.stamp;
   camera_info.header.frame_id = image.header.frame_id;
