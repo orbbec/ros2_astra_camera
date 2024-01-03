@@ -383,9 +383,7 @@ void OBCameraNode::setupPublishers() {
       std::string topic = name + "/image_raw";
       auto image_qos = image_qos_[stream_index];
       auto image_qos_profile = getRMWQosProfileFromString(image_qos);
-      image_publishers_[stream_index] = node_->create_publisher<sensor_msgs::msg::Image>(
-          topic,
-          rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(image_qos_profile), image_qos_profile));
+      image_publishers_[stream_index] = image_transport::create_publisher(node_, topic, image_qos_profile);
       topic = name + "/camera_info";
       auto camera_info_qos = camera_info_qos_[stream_index];
       auto camera_info_qos_profile = getRMWQosProfileFromString(camera_info_qos);
@@ -531,7 +529,7 @@ void OBCameraNode::onNewFrameCallback(const openni::VideoFrameRef& frame,
   image_msg->height = stream_index == DEPTH ? height * depth_scale_ : height;
   image_msg->step = image_msg->width * unit_step_size_[stream_index];
   image_msg->is_bigendian = false;
-  image_publisher->publish(*image_msg);
+  image_publisher.publish(image_msg);
   sensor_msgs::msg::CameraInfo camera_info;
   if (stream_index == DEPTH) {
     camera_info = getDepthCameraInfo();

@@ -219,8 +219,7 @@ class OBCameraNode {
   std::map<stream_index_pair, openni::VideoMode> stream_video_mode_;
   std::map<stream_index_pair, std::vector<openni::VideoMode>> supported_video_modes_;
   std::map<stream_index_pair, int> unit_step_size_;
-  std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>
-      image_publishers_;
+  std::map<stream_index_pair, image_transport::Publisher> image_publishers_;
   std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>
       camera_info_publishers_;
 
