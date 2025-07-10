@@ -14,9 +14,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-
 #include <opencv2/opencv.hpp>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>
+#else
 #include <cv_bridge/cv_bridge.h>
+#endif
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tf2_ros/static_transform_broadcaster.h>
@@ -219,8 +222,7 @@ class OBCameraNode {
   std::map<stream_index_pair, openni::VideoMode> stream_video_mode_;
   std::map<stream_index_pair, std::vector<openni::VideoMode>> supported_video_modes_;
   std::map<stream_index_pair, int> unit_step_size_;
-  std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr>
-      image_publishers_;
+  std::map<stream_index_pair, image_transport::Publisher> image_publishers_;
   std::map<stream_index_pair, rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr>
       camera_info_publishers_;
 
@@ -270,6 +272,8 @@ class OBCameraNode {
   std::string color_info_url_;
   std::string ir_info_url_;
   bool enable_publish_extrinsic_ = false;
+rclcpp::TimerBase::SharedPtr timer_;
+
 };
 
 }  // namespace astra_camera

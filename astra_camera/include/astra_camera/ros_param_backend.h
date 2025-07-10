@@ -12,14 +12,21 @@
 
 #pragma once
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/version.h>
 
 namespace astra_camera {
+#if RCLCPP_VERSION_GTE(20, 0, 0) // Iron changed the name, just moving 'Set' forwards
+  using OnSetCallback = rclcpp::node_interfaces::NodeParametersInterface::OnSetParametersCallbackType;
+#else
+  using OnSetCallback = rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType;
+#endif
+
 class ParametersBackend {
  public:
   explicit ParametersBackend(rclcpp::Node* node);
   ~ParametersBackend();
   void addOnSetParametersCallback(
-      rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType callback);
+       OnSetCallback callback);
 
  private:
   rclcpp::Node* node_;

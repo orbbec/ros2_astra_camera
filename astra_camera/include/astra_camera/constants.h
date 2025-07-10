@@ -14,6 +14,7 @@
 
 #include <string>
 #include <cstdlib>
+#include <cstdint>
 
 #define OB_ROS_MAJOR_VERSION 1
 #define OB_ROS_MINOR_VERSION 1

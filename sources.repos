@@ -1,0 +1,13 @@
+repositories:
+  # rplidar_ros:
+  #   type: git
+  #   url: https://github.com/Slamtec/rplidar_ros.git
+  #   version: ros2
+  # ros2_astra_camera:
+  #   type: git
+  #   url: https://github.com/ArendJan/ros2_astra_camera/
+  #   version: fix-ros-jammy # TODO: get this merged + other fixed for camera
+  libuvc:
+    type: git
+    url: https://github.com/ArendJan/libuvc.git
+    version: master

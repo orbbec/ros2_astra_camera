@@ -34,12 +34,17 @@
 #include <rclcpp/rclcpp.hpp>
 #include <image_transport/image_transport.hpp>
 #include <sensor_msgs/image_encodings.hpp>
+#if __has_include(<image_geometry/pinhole_camera_model.hpp>)
+#include <image_geometry/pinhole_camera_model.hpp>
+#else
 #include <image_geometry/pinhole_camera_model.h>
+#endif
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <memory>
 #include "depth_traits.h"
 #include "astra_camera/utils.h"
 #include "astra_camera/dynamic_params.h"
+#include <point_cloud_transport/point_cloud_transport.hpp>
 
 namespace astra_camera {
 
@@ -69,10 +74,11 @@ class PointCloudXyzNode {
 
   // Publications
   std::mutex connect_mutex_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_point_cloud_;
-
+  // rclcpp::Publisher<PointCloud2>::SharedPtr pub_point_cloud_;
+  rclcpp::TimerBase::SharedPtr timer_;
   image_geometry::PinholeCameraModel model_;
-
+  std::shared_ptr<point_cloud_transport::PointCloudTransport> pct;
+  point_cloud_transport::Publisher pub_point_cloud_;
   void connectCb();
 
   void depthCb(const Image::ConstSharedPtr& depth_msg, const CameraInfo::ConstSharedPtr& info_msg);

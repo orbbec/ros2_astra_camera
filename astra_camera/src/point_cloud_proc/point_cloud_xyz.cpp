@@ -34,14 +34,23 @@
 
 #include <image_transport/image_transport.hpp>
 #include <sensor_msgs/image_encodings.hpp>
-#include <image_geometry/pinhole_camera_model.h>
+
+#if __has_include(<image_geometry/pinhole_camera_model.hpp>)
+  #include <image_geometry/pinhole_camera_model.hpp>
+#else
+  #include <image_geometry/pinhole_camera_model.h>
+#endif
+
 #include "astra_camera/point_cloud_proc/point_cloud_xyz.h"
+#include <point_cloud_transport/point_cloud_transport.hpp>
+
 
 namespace astra_camera {
 
 PointCloudXyzNode::PointCloudXyzNode(rclcpp::Node *const node,
                                      std::shared_ptr<Parameters> parameters)
     : node_(node), parameters_(std::move(parameters)) {
+      std::cout << "PointCloudXyzNode constructor" << std::endl;
   // Read parameters
   setAndGetNodeParameter<int>(parameters_, queue_size_, "queue_size", 5);
   std::string point_cloud_qos;
@@ -50,18 +59,32 @@ PointCloudXyzNode::PointCloudXyzNode(rclcpp::Node *const node,
                                       "default");
   setAndGetNodeParameter<std::string>(parameters_, depth_qos, "depth_qos", "default");
   depth_qos_profile_ = getRMWQosProfileFromString(depth_qos);
-  // Monitor whether anyone is subscribed to the output
-  // TODO(ros2) Implement when SubscriberStatusCallback is available
-  // ros::SubscriberStatusCallback connect_cb = boost::bind(&PointCloudXyzNode::connectCb, this);
-  connectCb();
+  rclcpp::Node::SharedPtr node2 = node_->shared_from_this();
+  this->pct = std::make_shared<point_cloud_transport::PointCloudTransport>(node2);
 
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
   std::scoped_lock<decltype(connect_mutex_)> lock(connect_mutex_);
-  // TODO(ros2) Implement when SubscriberStatusCallback is available
   point_cloud_qos_profile_ = getRMWQosProfileFromString(point_cloud_qos);
-  pub_point_cloud_ = node_->create_publisher<PointCloud2>(
-      "depth/points", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(point_cloud_qos_profile_),
-                                  point_cloud_qos_profile_));
+  pub_point_cloud_ = pct->advertise(
+      "depth/points", 1);
+  // pub_point_cloud_.get_subscription_count();
+  
+  // create timer for publishing point cloud
+  bool has_subscribers = false;
+  timer_ = node_->create_wall_timer(std::chrono::milliseconds(1000), [this, &has_subscribers]() {
+      // std::cout << "timer" << this->pub_point_cloud_.get_subscription_count() << std::endl;
+      if(this->pub_point_cloud_.getNumSubscribers() > 0 && has_subscribers == false) {
+        RCLCPP_INFO(node_->get_logger(), "Publishing point cloud");
+        this->connectCb();
+        // this->pub_point_cloud_.publish(*cloud_msg);
+      } else if(this->pub_point_cloud_.getNumSubscribers() == 0 && has_subscribers == true) {
+        RCLCPP_INFO(node_->get_logger(), "No subscribers, stopping publishing point cloud");
+        // this->pub_point_cloud_.publish(*cloud_msg);
+        this->connectCb();
+      }
+      has_subscribers = this->pub_point_cloud_.getNumSubscribers() > 0;
+      
+    });
 }
 
 template <typename T>
@@ -109,7 +132,9 @@ void PointCloudXyzNode::convertDepth(const sensor_msgs::msg::Image::ConstSharedP
 // Handles (un)subscribing when clients (un)subscribe
 void PointCloudXyzNode::connectCb() {
   std::scoped_lock<decltype(connect_mutex_)> lock(connect_mutex_);
-  if (!sub_depth_) {
+  if(pub_point_cloud_.getNumSubscribers() == 0 && sub_depth_) {
+    sub_depth_.shutdown();
+  } else if (!sub_depth_) {
     auto custom_qos = depth_qos_profile_;
     custom_qos.depth = queue_size_;
 
@@ -145,8 +170,7 @@ void PointCloudXyzNode::depthCb(const Image::ConstSharedPtr &depth_msg,
     RCLCPP_ERROR(logger_, "Depth image has unsupported encoding [%s]", depth_msg->encoding.c_str());
     return;
   }
-
-  pub_point_cloud_->publish(*cloud_msg);
+  pub_point_cloud_.publish(*cloud_msg);
 }
 
 }  // namespace astra_camera

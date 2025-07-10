@@ -57,6 +57,8 @@
     <arg name="oni_log_to_file" default="false"/>
     <arg name="enable_d2c_viewer" default="false"/>
     <arg name="enable_publish_extrinsic" default="false"/>
+
+    <node pkg="astra_camera" exec="clean_shm_node" />
     <group>
         <push-ros-namespace namespace="$(var camera_name)"/>
         <node name="camera" pkg="astra_camera" exec="astra_camera_node" output="screen">
@@ -75,7 +77,7 @@
             <param name="color_fps" value="$(var color_fps)"/>
             <param name="enable_color" value="$(var enable_color)"/>
             <param name="flip_color" value="$(var flip_color)"/>
-            <param name="color_qos" value="$(var color_qos)"/>
+            <param name="rgb_qos_profile" value="$(var color_qos)"/>
             <param name="color_camera_info_qos" value="$(var color_camera_info_qos)"/>
             <param name="depth_width" value="$(var depth_width)"/>
             <param name="depth_height" value="$(var depth_height)"/>

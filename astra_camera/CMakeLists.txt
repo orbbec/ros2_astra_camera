@@ -12,6 +12,26 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
+# # Some includes changed between Humble and Jazzy, so this next code checks for the ROS version to define a macro variable
+# # in the Cpp/Hpp files, the correct header files can be included based on this macro
+# set(ROS_FOUND FALSE)
+# if(DEFINED ENV{ROS_DISTRO})
+#   set(FOUND_ROS_DISTRO $ENV{ROS_DISTRO})
+#   set(ROS_FOUND TRUE)
+# endif()
+# if(ROS_FOUND)
+#   message("Using ROS distro: " $ENV{ROS_DISTRO}) 
+#   if($ENV{ROS_DISTRO} STREQUAL "humble")
+#     add_compile_definitions(ROS2_HUMBLE)
+#   elseif($ENV{ROS_DISTRO} STREQUAL "jazzy")
+#     add_compile_definitions(ROS2_JAZZY)
+#   endif()
+# else()
+#   message("ROS distro is unknown. Compilation might fail. Fallback to Jazzy")
+#   add_compile_definitions(ROS2_JAZZY)
+# endif()
+
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake REQUIRED)
@@ -40,8 +60,20 @@ find_package(tf2_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(point_cloud_transport REQUIRED)
+find_package(libuvc REQUIRED)
 
 pkg_search_module(LIBUVC REQUIRED libuvc)
+get_cmake_property(_variableNames VARIABLES)
+list (SORT _variableNames)
+foreach (_variableName ${_variableNames})
+    message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
+message(STATUS "libuvc_INCLUDE_DIRS: ${LIBUVC_INCLUDE_DIRS}")
+message(STATUS "libuvc_CFLAGS: ${LIBUVC_CFLAGS}")
+message(STATUS "libuvc_LIBRARIES: ${LIBUVC_LIBRARIES}")
+message(STATUS "libuvc_VERSION: ${LIBUVC_VERSION}")
+message(STATUS "libuvc_FOUND: ${LIBUVC_FOUND}")
 if (NOT LIBUVC_FOUND)
   message(FATAL_ERROR "libuvc is not found")
 endif ()
@@ -93,6 +125,7 @@ set(dependencies
   tf2_sensor_msgs
   message_filters
   camera_info_manager
+  point_cloud_transport
   )
 
 add_library(${PROJECT_NAME} SHARED
@@ -128,14 +161,19 @@ target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBS}
   Eigen3::Eigen
   ${GLOG_LIBRARIES}
-  ${LIBUVC_LIBRARIES}
+  LibUVC::UVCShared
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   )
 
-add_executable(${PROJECT_NAME}_node
-  src/main.cpp
-  )
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "astra_camera::OBCameraNodeFactory"
+  EXECUTABLE ${PROJECT_NAME}_node
+)
+
+# add_executable(${PROJECT_NAME}_node
+#   src/main.cpp
+#   )
 
 target_include_directories(${PROJECT_NAME}_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
@@ -155,7 +193,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${OpenCV_LIBS}
   Eigen3::Eigen
   ${GLOG_LIBRARIES}
-  ${LIBUVC_LIBRARIES}
+  LibUVC::UVCShared
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   ${PROJECT_NAME}
@@ -180,7 +218,7 @@ target_link_libraries(list_devices_node
   ${OpenCV_LIBS}
   Eigen3::Eigen
   ${GLOG_LIBRARIES}
-  ${LIBUVC_LIBRARIES}
+  LibUVC::UVCShared
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   ${PROJECT_NAME}
@@ -207,7 +245,7 @@ target_link_libraries(clean_shm_node
   ${OpenCV_LIBS}
   Eigen3::Eigen
   ${GLOG_LIBRARIES}
-  ${LIBUVC_LIBRARIES}
+  LibUVC::UVCShared
   -lOpenNI2
   -L${ORBBEC_OPENNI2_REDIST}
   ${PROJECT_NAME}
@@ -230,7 +268,7 @@ install(DIRECTORY openni2_redist/${HOST_PLATFORM}/OpenNI2
 
 install(TARGETS list_devices_node
   clean_shm_node
-  ${PROJECT_NAME}_node
+  # ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}/
   )
 

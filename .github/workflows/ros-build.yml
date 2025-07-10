@@ -1,0 +1,23 @@
+name: ros-ci
+on:
+  pull_request: 
+  push:
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      matrix:
+        arch: ['amd64', 'arm64']
+        ros_distro: [humble, jazzy]
+        include:
+          - ubuntu_version: '22.04'
+            ros_distro: humble
+          - ubuntu_version: '24.04'
+            ros_distro: jazzy
+
+    uses: ./.github/workflows/build-single.yml
+    with:
+      arch: ${{ matrix.arch }}
+      ubuntu_version: ${{ matrix.ubuntu_version }}
+      ros_distro: ${{ matrix.ros_distro }}

@@ -72,7 +72,3 @@ class OBCameraNodeFactory : public rclcpp::Node {
 };
 
 }  // namespace astra_camera
-
-#include <rclcpp_components/register_node_macro.hpp>
-
-RCLCPP_COMPONENTS_REGISTER_NODE(astra_camera::OBCameraNodeFactory)

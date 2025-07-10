@@ -41,9 +41,19 @@
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <image_geometry/pinhole_camera_model.h>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+  #include <cv_bridge/cv_bridge.hpp>
+#else
+  #include <cv_bridge/cv_bridge.h>
+#endif
+
+#if __has_include(<image_geometry/pinhole_camera_model.hpp>)
+  #include <image_geometry/pinhole_camera_model.hpp>
+#else
+  #include <image_geometry/pinhole_camera_model.h>
+#endif
+
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #include <memory>
 #include <limits>
@@ -83,6 +93,7 @@ class PointCloudXyzrgbNode {
   using ExactSynchronizer = message_filters::Synchronizer<ExactSyncPolicy>;
   std::shared_ptr<Synchronizer> sync_;
   std::shared_ptr<ExactSynchronizer> exact_sync_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   // Publications
   std::mutex connect_mutex_;

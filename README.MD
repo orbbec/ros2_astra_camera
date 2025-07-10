@@ -16,7 +16,7 @@ official [ROS 2 installation guide](https://docs.ros.org/en/galactic/Installatio
 ```bash
  Assuming you have sourced the ros environment, same below
 sudo apt install libgflags-dev  ros-$ROS_DISTRO-image-geometry ros-$ROS_DISTRO-camera-info-manager\
-ros-$ROS_DISTRO-image-transport ros-$ROS_DISTRO-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev
+ ros-$ROS_DISTRO-image-transport ros-$ROS_DISTRO-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev nlohmann-json3-dev
 
 ```
 
