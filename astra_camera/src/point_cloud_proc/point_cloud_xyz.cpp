@@ -39,10 +39,10 @@
 
 namespace astra_camera {
 
-PointCloudXyzNode::PointCloudXyzNode(rclcpp::Node *const node,
-                                     std::shared_ptr<Parameters> parameters)
-    : node_(node), parameters_(std::move(parameters)) {
+PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions& options)
+    : Node("PointCloudXyzNode", options){
   // Read parameters
+  parameters_ = std::make_shared<Parameters>(this);    
   setAndGetNodeParameter<int>(parameters_, queue_size_, "queue_size", 5);
   std::string point_cloud_qos;
   std::string depth_qos;
@@ -59,7 +59,7 @@ PointCloudXyzNode::PointCloudXyzNode(rclcpp::Node *const node,
   std::scoped_lock<decltype(connect_mutex_)> lock(connect_mutex_);
   // TODO(ros2) Implement when SubscriberStatusCallback is available
   point_cloud_qos_profile_ = getRMWQosProfileFromString(point_cloud_qos);
-  pub_point_cloud_ = node_->create_publisher<PointCloud2>(
+  pub_point_cloud_ = this->create_publisher<PointCloud2>(
       "depth/points", rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(point_cloud_qos_profile_),
                                   point_cloud_qos_profile_));
 }
@@ -114,7 +114,7 @@ void PointCloudXyzNode::connectCb() {
     custom_qos.depth = queue_size_;
 
     sub_depth_ = image_transport::create_camera_subscription(
-        node_, "depth/image_raw",
+        this, "depth/image_raw",
         [this](const sensor_msgs::msg::Image::ConstSharedPtr &msg,
                const sensor_msgs::msg::CameraInfo::ConstSharedPtr &info) { depthCb(msg, info); },
         "raw", custom_qos);
@@ -150,3 +150,10 @@ void PointCloudXyzNode::depthCb(const Image::ConstSharedPtr &depth_msg,
 }
 
 }  // namespace astra_camera
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader.
+RCLCPP_COMPONENTS_REGISTER_NODE(astra_camera::PointCloudXyzNode)
+
+

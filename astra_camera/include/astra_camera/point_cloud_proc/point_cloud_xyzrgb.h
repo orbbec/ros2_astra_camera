@@ -59,9 +59,9 @@ namespace astra_camera {
 
 namespace enc = sensor_msgs::image_encodings;
 
-class PointCloudXyzrgbNode {
+class PointCloudXyzrgbNode : public rclcpp::Node{
  public:
-  explicit PointCloudXyzrgbNode(rclcpp::Node* node, std::shared_ptr<Parameters> parameters);
+  explicit PointCloudXyzrgbNode(const rclcpp::NodeOptions& options);
   void convertRgb(const sensor_msgs::msg::Image::ConstSharedPtr& rgb_msg,
                   sensor_msgs::msg::PointCloud2::SharedPtr& cloud_msg, int red_offset,
                   int green_offset, int blue_offset, int color_step);
@@ -70,7 +70,6 @@ class PointCloudXyzrgbNode {
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
-  rclcpp::Node* const node_;
   std::shared_ptr<Parameters> parameters_;
   rmw_qos_profile_t point_cloud_qos_profile_;
   rmw_qos_profile_t color_qos_profile_, depth_qos_profile_, info_qos_profile_;

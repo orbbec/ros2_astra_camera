@@ -213,6 +213,14 @@ target_link_libraries(clean_shm_node
   ${PROJECT_NAME}
   )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE "COMPOSITION_BUILDING_DLL")
+
+rclcpp_components_register_nodes(${PROJECT_NAME}
+  "${PROJECT_NAME}::PointCloudXyzrgbNode"
+  "${PROJECT_NAME}::PointCloudXyzNode"
+  "${PROJECT_NAME}::OBCameraNodeFactory")
+
+
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

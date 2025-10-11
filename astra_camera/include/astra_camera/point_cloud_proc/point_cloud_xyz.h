@@ -45,9 +45,9 @@ namespace astra_camera {
 
 namespace enc = sensor_msgs::image_encodings;
 
-class PointCloudXyzNode {
+class PointCloudXyzNode : public rclcpp::Node {
  public:
-  explicit PointCloudXyzNode(rclcpp::Node* const node, std::shared_ptr<Parameters> parameters);
+  explicit PointCloudXyzNode(const rclcpp::NodeOptions& options);
 
   template <typename T>
   static void convertDepth(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
@@ -58,7 +58,6 @@ class PointCloudXyzNode {
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
-  rclcpp::Node* const node_;
   std::shared_ptr<Parameters> parameters_;
   rclcpp::Logger logger_ = rclcpp::get_logger("PointCloudXyzNode");
   // Subscriptions

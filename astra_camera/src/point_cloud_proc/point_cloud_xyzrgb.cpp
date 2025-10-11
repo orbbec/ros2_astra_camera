@@ -43,16 +43,13 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <memory>
-#include <string>
-#include <vector>
 #include "astra_camera/point_cloud_proc/point_cloud_xyzrgb.h"
 namespace astra_camera {
 
-PointCloudXyzrgbNode::PointCloudXyzrgbNode(rclcpp::Node* const node,
-                                           std::shared_ptr<Parameters> parameters)
-    : node_(node), parameters_(std::move(parameters)) {
+PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions& options)
+    : Node("PointCloudXyzrgbNode", options) {
   // Read parameters
+  parameters_ = std::make_shared<Parameters>(this);    
   int queue_size = 5;
   bool use_exact_sync = false;
   setAndGetNodeParameter<int>(parameters_, queue_size, "queue_size", 5);
@@ -90,7 +87,7 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(rclcpp::Node* const node,
   // Make sure we don't enter connectCb() between advertising and assigning to pub_point_cloud_
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
-  pub_point_cloud_ = node_->create_publisher<PointCloud2>(
+  pub_point_cloud_ = this->create_publisher<PointCloud2>(
       "depth/color/points",
       rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(point_cloud_qos_profile_),
                   point_cloud_qos_profile_));
@@ -121,15 +118,15 @@ void PointCloudXyzrgbNode::connectCb() {
   // TODO(ros2) Implement getNumSubscribers when rcl/rmw support it
   // parameter for depth_image_transport hint
   std::string depth_image_transport_param = "depth_image_transport";
-  image_transport::TransportHints depth_hints(node_, "raw", depth_image_transport_param);
+  image_transport::TransportHints depth_hints(this, "raw", depth_image_transport_param);
 
   // depth image can use different transport.(e.g. compressedDepth)
-  sub_depth_.subscribe(node_, "depth/image_raw", depth_hints.getTransport(), depth_qos_profile_);
+  sub_depth_.subscribe(this, "depth/image_raw", depth_hints.getTransport(), depth_qos_profile_);
 
   // rgb uses normal ros transport hints.
-  image_transport::TransportHints hints(node_, "raw");
-  sub_rgb_.subscribe(node_, "color/image_raw", hints.getTransport(), color_qos_profile_);
-  sub_info_.subscribe(node_, "color/camera_info", info_qos_profile_);
+  image_transport::TransportHints hints(this, "raw");
+  sub_rgb_.subscribe(this, "color/image_raw", hints.getTransport(), color_qos_profile_);
+  sub_info_.subscribe(this, "color/camera_info", info_qos_profile_);
 }
 
 void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
@@ -186,7 +183,7 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
       rgb_msg = cv_bridge::toCvCopy(cv_rsz.toImageMsg(), enc::RGB8)->toImageMsg();
     }
 
-    RCLCPP_ERROR_THROTTLE(logger_, *(node_->get_clock()), 50000,
+    RCLCPP_ERROR_THROTTLE(logger_, *(this->get_clock()), 50000,
                           "Depth resolution (%ux%u) does not match RGB resolution (%ux%u)",
                           depth_msg->width, depth_msg->height, rgb_msg->width, rgb_msg->height);
     return;
@@ -260,3 +257,8 @@ void PointCloudXyzrgbNode::imageCb(const Image::ConstSharedPtr& depth_msg,
 }
 
 }  // namespace astra_camera
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+// Register the component with class_loader.
+RCLCPP_COMPONENTS_REGISTER_NODE(astra_camera::PointCloudXyzrgbNode)
