@@ -13,13 +13,16 @@
 #pragma once
 #include <rclcpp/rclcpp.hpp>
 
+#include <rclcpp/node_interfaces/node_parameters_interface.hpp> 
+
 namespace astra_camera {
 class ParametersBackend {
  public:
   explicit ParametersBackend(rclcpp::Node* node);
   ~ParametersBackend();
   void addOnSetParametersCallback(
-      rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType callback);
+      //rclcpp::node_interfaces::NodeParametersInterface::OnParametersSetCallbackType callback);
+      rclcpp::node_interfaces::NodeParametersInterface::OnSetParametersCallbackType callback);
 
  private:
   rclcpp::Node* node_;

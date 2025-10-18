@@ -34,7 +34,7 @@
 
 #include <image_transport/image_transport.hpp>
 #include <sensor_msgs/image_encodings.hpp>
-#include <image_geometry/pinhole_camera_model.h>
+#include <image_geometry/pinhole_camera_model.hpp>
 #include "astra_camera/point_cloud_proc/point_cloud_xyz.h"
 
 namespace astra_camera {

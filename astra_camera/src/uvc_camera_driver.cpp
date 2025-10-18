@@ -12,7 +12,7 @@
 
 #include <utility>
 #include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.hpp>
 #include "astra_camera/uvc_camera_driver.h"
 #include "astra_camera/utils.h"
 
