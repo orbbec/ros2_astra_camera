@@ -11,24 +11,12 @@ official [ROS 2 installation guide](https://docs.ros.org/en/galactic/Installatio
 
 ### other dependencies
 
-● Install dependencies (be careful with your ROS distribution)
+● Install dependencies with rosdep
 
 ```bash
- Assuming you have sourced the ros environment, same below
-sudo apt install libgflags-dev  ros-$ROS_DISTRO-image-geometry ros-$ROS_DISTRO-camera-info-manager\
-ros-$ROS_DISTRO-image-transport ros-$ROS_DISTRO-image-publisher libgoogle-glog-dev libusb-1.0-0-dev libeigen3-dev
-
-```
-
-● Install libuvc
-
-```bash
-git clone https://github.com/libuvc/libuvc.git
-cd libuvc
-mkdir build && cd build
-cmake .. && make -j4
-sudo make install
-sudo ldconfig # Refreshing the link library
+#sudo rosdep init  #uncomment, if not done
+#rosdep update     #uncomment, if not done
+sudo apt update && rosdep install --from-paths src --ignore-src -r -y
 ```
 
 ### Getting Started
